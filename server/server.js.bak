@@ -1,0 +1,882 @@
+const dotenv = require('dotenv');
+const path = require('path');
+const fs = require('fs');
+
+// Cargar variables de entorno desde el archivo config.env
+const envPath = path.join(__dirname, 'config.env');
+console.log('Cargando configuración desde:', envPath);
+dotenv.config({ path: envPath });
+
+// Verificar que las variables de entorno se hayan cargado correctamente
+console.log('Verificando configuración de la base de datos:');
+console.log('- DB_HOST:', process.env.DB_HOST || '(no configurado)');
+console.log('- DB_USER:', process.env.DB_USER || '(no configurado)');
+console.log('- DB_NAME:', process.env.DB_NAME || '(no configurado)');
+console.log('- DB_PASSWORD:', process.env.DB_PASSWORD ? '*****' : '(no configurada)');
+console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '*****' : '(no configurado)');
+
+const express = require('express');
+const mysql = require('mysql2/promise');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const app = express();
+const PORT = process.env.PORT || 4000;
+
+// Configuración de CORS
+const corsOptions = {
+  origin: ['http://localhost:3000', 'http://localhost:4000', 'http://127.0.0.1:4000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  credentials: true,
+  maxAge: 86400,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+// Configuración de CORS
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Manejar preflight para todas las rutas
+app.use(express.json());
+
+// Configuración para servir archivos estáticos
+const setCustomHeaders = (res, path) => {
+  if (path.endsWith('.js')) {
+    res.setHeader('Content-Type', 'application/javascript');
+  } else if (path.endsWith('.css')) {
+    res.setHeader('Content-Type', 'text/css');
+  } else if (path.endsWith('.json')) {
+    res.setHeader('Content-Type', 'application/json');
+  } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+    res.setHeader('Content-Type', 'image/jpeg');
+  } else if (path.endsWith('.png')) {
+    res.setHeader('Content-Type', 'image/png');
+  } else if (path.endsWith('.gif')) {
+    res.setHeader('Content-Type', 'image/gif');
+  } else if (path.endsWith('.svg')) {
+    res.setHeader('Content-Type', 'image/svg+xml');
+  } else if (path.endsWith('.woff')) {
+    res.setHeader('Content-Type', 'font/woff');
+  } else if (path.endsWith('.woff2')) {
+    res.setHeader('Content-Type', 'font/woff2');
+  } else if (path.endsWith('.ttf')) {
+    res.setHeader('Content-Type', 'font/ttf');
+  } else if (path.endsWith('.eot')) {
+    res.setHeader('Content-Type', 'application/vnd.ms-fontobject');
+  }
+  
+  // Deshabilitar el almacenamiento en caché para desarrollo
+  if (process.env.NODE_ENV === 'development') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+};
+
+// Configuración de Express para archivos estáticos
+const staticOptions = {
+  setHeaders: setCustomHeaders,
+  fallthrough: true
+};
+
+// Configurar la ruta base para archivos estáticos
+const staticDir = path.join(__dirname, '..');
+console.log('Sirviendo archivos estáticos desde:', staticDir);
+
+// Middleware para evitar caché en desarrollo
+const noCache = (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+};
+
+// Configuración de rutas estáticas
+const serveStatic = (directory, options = {}) => {
+  const staticHandler = express.static(directory, { ...staticOptions, ...options });
+  return (req, res, next) => {
+    // Evitar que Express sirva archivos ocultos
+    if (req.path.split('/').pop().startsWith('.')) {
+      return res.status(403).send('Acceso denegado');
+    }
+    staticHandler(req, res, next);
+  };
+};
+
+// Servir archivos estáticos desde la carpeta src
+app.use(express.static(path.join(__dirname, '../src'), staticOptions));
+
+// Servir archivos estáticos desde la carpeta raíz
+app.use(express.static(staticDir, staticOptions));
+
+// Mapeo de rutas a sus respectivos archivos HTML
+const routes = {
+  '/login': '/src/pages/login/index.html',
+  '/panel-admin': '/src/pages/panel-admin/index.html',
+  '/panel-profesor': '/src/pages/panel-profesor/index.html',
+  '/panel-estudiante': '/src/pages/panel-estudiante/index.html',
+  '/': '/src/pages/login/index.html'  // Ruta por defecto
+};
+
+// Ruta específica para el favicon.ico
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(staticDir, 'src/favicon.ico'));
+});
+
+// Ruta para el panel de estudiante
+app.get('/pages/panel-estudiante/*', noCache, (req, res) => {
+  const filePath = path.join(staticDir, 'src/pages/panel-estudiante', req.params[0]);
+  console.log('Sirviendo archivo del panel de estudiante:', filePath);
+  
+  // Verificar si el archivo existe
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    // Si el archivo no existe, enviar el archivo principal
+    res.sendFile(path.join(staticDir, 'src/pages/panel-estudiante/index.html'));
+  }
+});
+
+// Ruta para forzar cierre de sesión
+app.get('/force-logout', (req, res) => {
+  // Limpiar cualquier cookie de sesión
+  res.clearCookie('auth_token');
+  res.redirect('/login');
+});
+
+// Ruta para la página de login
+app.get('/login', (req, res) => {
+  const loginPath = path.join(staticDir, 'src/pages/login/index.html');
+  console.log('Sirviendo login desde:', loginPath);
+  if (fs.existsSync(loginPath)) {
+    res.sendFile(loginPath);
+  } else {
+    res.status(404).send('Página de login no encontrada');
+  }
+});
+
+// Ruta para la página principal
+app.get('/', (req, res) => {
+  const indexPath = path.join(staticDir, 'index.html');
+  console.log('Sirviendo página principal desde:', indexPath);
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Página principal no encontrada');
+  }
+});
+
+// Ruta para la página de registro
+app.get('/registro', (req, res) => {
+  const registroPath = path.join(staticDir, 'src/pages/registro/index.html');
+  console.log('Sirviendo registro desde:', registroPath);
+  if (fs.existsSync(registroPath)) {
+    res.sendFile(registroPath);
+  } else {
+    res.status(404).send('Página de registro no encontrada');
+  }
+});
+
+// Ruta para el panel de estudiante (manejo SPA)
+app.get('/panel-estudiante*', (req, res) => {
+  const panelPath = path.join(staticDir, 'src/pages/panel-estudiante/index.html');
+  console.log('Sirviendo panel de estudiante desde:', panelPath);
+  serveFileSafe(res, panelPath, 'Panel de estudiante no encontrado');
+});
+
+// Ruta para el panel de administrador (manejo SPA)
+app.get('/panel-admin*', (req, res) => {
+  const panelPath = path.join(staticDir, 'src/pages/panel-admin/index.html');
+  console.log('Sirviendo panel de administrador desde:', panelPath);
+  if (fs.existsSync(panelPath)) {
+    res.sendFile(panelPath);
+  } else {
+    res.status(404).send('Panel de administrador no encontrado');
+  }
+});
+
+// Ruta para el panel de profesor
+app.get('/panel-profesor*', (req, res) => {
+  const panelPath = path.join(staticDir, 'src/pages/panel-profesor/index.html');
+  console.log('Sirviendo panel de profesor desde:', panelPath);
+  if (fs.existsSync(panelPath)) {
+    res.sendFile(panelPath);
+  } else {
+    res.status(404).send('Panel de profesor no encontrado');
+  }
+});
+
+// Ruta para archivos estáticos
+app.get('*', (req, res) => {
+  const filePath = path.join(staticDir, req.path);
+  console.log('Intentando servir archivo estático:', filePath);
+  
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    console.error('Archivo no encontrado:', filePath);
+    res.status(404).send('Archivo no encontrado');
+  }
+});
+
+// Manejar rutas de paneles
+app.get('/panel-admin*', (req, res) => {
+  const panelPath = path.join(staticDir, 'src/pages/panel-admin/index.html');
+  console.log('Sirviendo panel admin desde:', panelPath);
+  res.sendFile(panelPath);
+});
+
+app.get('/panel-profesor*', (req, res) => {
+  const panelPath = path.join(staticDir, 'src/pages/panel-profesor/index.html');
+  console.log('Sirviendo panel profesor desde:', panelPath);
+  res.sendFile(panelPath);
+});
+
+app.get('/panel-estudiante*', (req, res) => {
+  const panelPath = path.join(staticDir, 'src/pages/panel-estudiante/index.html');
+  console.log('Sirviendo panel estudiante desde:', panelPath);
+  res.sendFile(panelPath);
+});
+
+// Ruta para manejar las rutas antiguas (redireccionar a las nuevas)
+app.get('/pages/panel-*', (req, res) => {
+  const newPath = req.path.replace('/pages', '');
+  console.log(`Redirigiendo de ${req.path} a ${newPath}`);
+  res.redirect(newPath);
+});
+
+// Mapeo de rutas a sus respectivos archivos HTML
+const routes = {
+  '/login': '/src/pages/login/index.html',
+  '/panel-admin': '/src/pages/panel-admin/index.html',
+  '/panel-profesor': '/src/pages/panel-profesor/index.html',
+  '/panel-estudiante': '/src/pages/panel-estudiante/index.html',
+  '/': '/src/pages/login/index.html'  // Ruta por defecto
+};
+
+// Manejar rutas de la aplicación (SPA)
+app.get('*', (req, res) => {
+  // Si la ruta comienza con /api, devolver 404
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Ruta no encontrada' });
+  }
+
+  // Verificar si es una ruta conocida
+  if (routes[req.path]) {
+    const filePath = path.join(staticDir, routes[req.path]);
+    console.log('\n📂 Sirviendo ruta conocida:', req.path, '->', filePath);
+    
+    if (fs.existsSync(filePath)) {
+      console.log('✅ Archivo encontrado, enviando...');
+      return res.sendFile(filePath);
+    } else {
+      console.log('❌ Archivo no encontrado:', filePath);
+    }
+  }
+
+  // Si no es una ruta conocida, intentar servir archivos estáticos
+  const filePath = path.join(staticDir, req.path);
+  console.log('\n🔍 Intentando servir archivo estático:', filePath);
+  
+  if (fs.existsSync(filePath) && !fs.lstatSync(filePath).isDirectory()) {
+    console.log('✅ Archivo estático encontrado, enviando...');
+    return res.sendFile(filePath);
+  }
+
+  console.log('❌ Ruta no encontrada:', req.path);
+  
+  // Si no se encuentra, redirigir al login
+  console.log('🔄 Redirigiendo a /login');
+  res.redirect('/login');
+});
+
+// Configuración de la base de datos
+const dbConfig = {
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'sistema_academico',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
+};
+
+// Pool de conexiones
+const pool = mysql.createPool(dbConfig);
+
+// Verificar la conexión a la base de datos
+async function testDatabaseConnection() {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    console.log('✅ Conexión a la base de datos establecida correctamente');
+    
+    // Verificar si la tabla de usuarios existe
+    const [tables] = await connection.query(
+      "SHOW TABLES LIKE 'usuarios'"
+    );
+    
+    if (tables.length === 0) {
+      console.warn('⚠️  La tabla "usuarios" no existe en la base de datos');
+      // Aquí podríamos crear la tabla automáticamente si es necesario
+    } else {
+      console.log('✅ Tabla "usuarios" encontrada');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error al conectar a la base de datos:');
+    console.error('- Código:', error.code);
+    console.error('- Mensaje:', error.message);
+    console.error('Por favor, verifica la configuración en config.env');
+    return false;
+  } finally {
+    if (connection) await connection.release();
+  }
+}
+
+// Middleware para verificar token
+const authenticateToken = (req, res, next) => {
+  console.log('=== VERIFICANDO TOKEN ===');
+  const authHeader = req.headers['authorization'];
+  console.log('Authorization header:', authHeader);
+  
+  if (!authHeader) {
+    console.log('❌ No se encontró el encabezado de autorización');
+    return res.status(401).json({ error: 'Token no proporcionado' });
+  }
+  
+  const token = authHeader.split(' ')[1];
+  console.log('Token recibido:', token ? '***' + token.slice(-8) : 'No hay token');
+  
+  if (!token) {
+    console.log('❌ Token no proporcionado en el formato correcto');
+    return res.status(401).json({ error: 'Formato de token inválido' });
+  }
+  
+  jwt.verify(token, process.env.JWT_SECRET || 'secreto_del_sistema', (err, user) => {
+    if (err) {
+      console.log('❌ Error al verificar el token:', err.message);
+      return res.status(403).json({ 
+        error: 'Token inválido o expirado',
+        details: process.env.NODE_ENV === 'development' ? err.message : undefined
+      });
+    }
+    
+    console.log('✅ Token verificado correctamente. Usuario:', user);
+    req.user = user;
+    next();
+  });
+};
+
+// Ejecutar la verificación de conexión
+testDatabaseConnection().then(success => {
+  if (!success) {
+    console.error('No se pudo establecer conexión con la base de datos. El servidor puede no funcionar correctamente.');
+  }
+});
+
+// Ruta de prueba de base de datos
+app.get('/test-db', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT 1 + 1 AS resultado');
+    res.json({ resultado: rows[0].resultado });
+  } catch (error) {
+    console.error('Error probando la base de datos:', error);
+    res.status(500).json({ error: 'Error en la base de datos' });
+  }
+});
+
+// Ruta para obtener datos del estudiante
+app.get('/api/estudiante/datos', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'estudiante') {
+    return res.status(403).json({ error: 'Acceso no autorizado' });
+  }
+
+  try {
+    // Obtener datos del estudiante desde la base de datos
+    const [estudiantes] = await pool.query(
+      'SELECT id, nombre, email, matricula, carrera, semestre FROM usuarios WHERE id = ?',
+      [req.user.id]
+    );
+
+    if (estudiantes.length === 0) {
+      return res.status(404).json({ error: 'Estudiante no encontrado' });
+    }
+
+    const estudiante = estudiantes[0];
+    
+    // Obtener cursos del estudiante
+    const [cursos] = await pool.query(
+      `SELECT c.id, c.nombre, c.horario, c.aula, CONCAT(u.nombre, ' ', u.apellido) as profesor 
+       FROM cursos c 
+       JOIN usuarios u ON c.profesor_id = u.id 
+       JOIN estudiante_curso ec ON c.id = ec.curso_id 
+       WHERE ec.estudiante_id = ?`,
+      [req.user.id]
+    );
+
+    // Obtener calificaciones
+    const [calificaciones] = await pool.query(
+      `SELECT c.nombre as curso, e.parcial1, e.parcial2, e.parcial3, e.final 
+       FROM evaluaciones e 
+       JOIN cursos c ON e.curso_id = c.id 
+       WHERE e.estudiante_id = ?`,
+      [req.user.id]
+    );
+
+    // Obtener asistencias
+    const [asistencias] = await pool.query(
+      `SELECT c.nombre as curso, 
+              COUNT(CASE WHEN a.estado = 'asistio' THEN 1 END) as asistidas,
+              COUNT(*) as total,
+              ROUND((COUNT(CASE WHEN a.estado = 'asistio' THEN 1 END) / COUNT(*)) * 100, 1) as porcentaje
+       FROM asistencias a
+       JOIN cursos c ON a.curso_id = c.id
+       WHERE a.estudiante_id = ?
+       GROUP BY c.id, c.nombre`,
+      [req.user.id]
+    );
+
+    // Obtener próximas clases (próximos 7 días)
+    const [proximasClases] = await pool.query(
+      `SELECT c.nombre as curso, 
+              DATE_FORMAT(cc.fecha, '%Y-%m-%d') as fecha,
+              DATE_FORMAT(cc.hora_inicio, '%H:%i') as hora,
+              c.aula
+       FROM clases_calendario cc
+       JOIN cursos c ON cc.curso_id = c.id
+       JOIN estudiante_curso ec ON c.id = ec.curso_id
+       WHERE ec.estudiante_id = ? 
+       AND cc.fecha BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+       ORDER BY cc.fecha, cc.hora_inicio
+       LIMIT 5`,
+      [req.user.id]
+    );
+
+    // Calcular promedio general
+    const promedio = calificaciones.length > 0 
+      ? calificaciones.reduce((sum, cal) => sum + (cal.final || 0), 0) / calificaciones.length
+      : 0;
+
+    // Calcular progreso (ejemplo simplificado)
+    const progreso = Math.min(100, Math.floor((calificaciones.length / 10) * 100));
+
+    // Construir respuesta
+    const response = {
+      success: true,
+      data: {
+        id: estudiante.id,
+        nombre: estudiante.nombre,
+        email: estudiante.email,
+        matricula: estudiante.matricula,
+        carrera: estudiante.carrera,
+        semestre: estudiante.semestre,
+        promedio: parseFloat(promedio.toFixed(2)),
+        progreso: progreso,
+        cursos: cursos,
+        calificaciones: calificaciones,
+        asistencias: asistencias,
+        proximasClases: proximasClases,
+        profesores: [] // Se puede poblar con datos adicionales si es necesario
+      }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error al obtener datos del estudiante:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener los datos del estudiante',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Ruta de registro
+app.post('/api/register', async (req, res) => {
+  console.log('\n=== NUEVA SOLICITUD DE REGISTRO ===');
+  console.log('Datos recibidos:', JSON.stringify(req.body, null, 2));
+  
+  let connection;
+  try {
+    const { nombre, email, username, password, role } = req.body;
+    
+    // Validar datos
+    if (!nombre || !email || !username || !password || !role) {
+      const errorMsg = 'Todos los campos son obligatorios';
+      console.log('Error de validación:', errorMsg);
+      return res.status(400).json({ 
+        success: false,
+        error: errorMsg 
+      });
+    }
+
+    // Obtener una conexión del pool
+    connection = await pool.getConnection();
+    console.log('Conexión a la base de datos establecida');
+
+    // Iniciar transacción
+    await connection.beginTransaction();
+    console.log('Transacción iniciada');
+
+    // Verificar si el correo o usuario ya existen
+    console.log('Verificando si el usuario ya existe...');
+    const [users] = await connection.query(
+      'SELECT id, email, username FROM usuarios WHERE email = ? OR username = ?', 
+      [email, username]
+    );
+
+    if (users.length > 0) {
+      const existingUser = users[0];
+      if (existingUser.email === email) {
+        const errorMsg = 'El correo electrónico ya está registrado';
+        console.log('Error:', errorMsg);
+        return res.status(400).json({ 
+          success: false,
+          error: errorMsg 
+        });
+      }
+      if (existingUser.username === username) {
+        const errorMsg = 'El nombre de usuario ya está en uso';
+        console.log('Error:', errorMsg);
+        return res.status(400).json({ 
+          success: false,
+          error: errorMsg 
+        });
+      }
+    }
+
+    // Encriptar contraseña
+    console.log('Encriptando contraseña...');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    console.log('Contraseña encriptada correctamente');
+
+    // Insertar nuevo usuario
+    console.log('Insertando nuevo usuario en la base de datos...');
+    const [result] = await connection.query(
+      'INSERT INTO usuarios (nombre, email, username, password, role) VALUES (?, ?, ?, ?, ?)',
+      [nombre, email, username, hashedPassword, role]
+    );
+    
+    const userId = result.insertId;
+    console.log('Usuario insertado con ID:', userId);
+
+    // Crear token JWT
+    console.log('Generando token JWT...');
+    const token = jwt.sign(
+      { 
+        id: userId, 
+        email, 
+        role,
+        iat: Math.floor(Date.now() / 1000) // Fecha de emisión
+      },
+      process.env.JWT_SECRET || 'secreto_del_sistema',
+      { 
+        expiresIn: '24h',
+        issuer: 'sistema_escolar_api'
+      }
+    );
+    console.log('Token generado correctamente');
+
+    // Confirmar transacción
+    await connection.commit();
+    console.log('Transacción confirmada');
+
+    const responseData = {
+      success: true,
+      message: 'Usuario registrado exitosamente',
+      token,
+      user: {
+        id: userId,
+        nombre,
+        email,
+        username,
+        role
+      }
+    };
+
+    console.log('Registro exitoso. Enviando respuesta:', JSON.stringify({
+      ...responseData,
+      token: '***JWT_TOKEN***' // No mostramos el token completo en los logs
+    }));
+
+    res.status(201).json(responseData);
+  } catch (error) {
+    // Revertir transacción en caso de error
+    if (connection) {
+      await connection.rollback();
+      console.log('Transacción revertida debido a un error');
+    }
+
+    console.error('Error en el registro:', error);
+    
+    // Manejar errores específicos de MySQL
+    let errorMessage = 'Error al registrar el usuario';
+    let statusCode = 500;
+    
+    if (error.code === 'ER_DUP_ENTRY') {
+      errorMessage = 'El correo o nombre de usuario ya está en uso';
+      statusCode = 400;
+    } else if (error.code === 'ER_NO_SUCH_TABLE') {
+      errorMessage = 'Error en la base de datos: La tabla de usuarios no existe';
+    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+      errorMessage = 'Error de autenticación con la base de datos';
+    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      errorMessage = 'No se pudo conectar al servidor de base de datos';
+    }
+    
+    res.status(statusCode).json({ 
+      success: false,
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  } finally {
+    // Liberar la conexión de vuelta al pool
+    if (connection) {
+      await connection.release();
+      console.log('Conexión liberada al pool');
+    }
+    console.log('=== FIN DE LA SOLICITUD DE REGISTRO ===\n');
+  }
+});
+
+// Ruta de login
+app.post('/api/login', async (req, res) => {
+  console.log('\n=== NUEVA SOLICITUD DE INICIO DE SESIÓN ===');
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Datos recibidos:', JSON.stringify(req.body, null, 2));
+  
+  let connection;
+  try {
+    const { email, password } = req.body;
+    
+    // Validar datos
+    if (!email || !password) {
+      const errorMsg = 'Correo y contraseña son requeridos';
+      console.log('Error de validación:', errorMsg);
+      return res.status(400).json({ 
+        success: false,
+        error: errorMsg 
+      });
+    }
+    
+    // Obtener una conexión del pool
+    connection = await pool.getConnection();
+    console.log('Conexión a la base de datos establecida');
+    
+    // Buscar usuario
+    console.log(`Buscando usuario con email: ${email}`);
+    const [users] = await connection.query(
+      'SELECT * FROM usuarios WHERE email = ?', 
+      [email]
+    );
+    
+    if (users.length === 0) {
+      console.log('❌ No se encontró ningún usuario con ese email');
+      return res.status(401).json({ 
+        success: false,
+        error: 'Credenciales inválidas' 
+      });
+    }
+    
+    const user = users[0];
+    console.log('✅ Usuario encontrado en la base de datos:', { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role,
+      // No mostramos el hash de la contraseña por seguridad
+    });
+    
+    // Verificar contraseña
+    console.log('🔐 Verificando contraseña...');
+    const validPassword = await bcrypt.compare(password, user.password);
+    
+    if (!validPassword) {
+      console.log('❌ Contraseña incorrecta');
+      return res.status(401).json({ 
+        success: false,
+        error: 'Credenciales inválidas' 
+      });
+    }
+    
+    console.log('✅ Contraseña válida');
+    
+    // Crear token JWT
+    console.log('🔑 Generando token JWT...');
+    const userPayload = { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role
+    };
+    
+    const token = jwt.sign(
+      userPayload,
+      process.env.JWT_SECRET || 'secreto_del_sistema',
+      { 
+        expiresIn: '24h',
+        issuer: 'sistema_escolar_api'
+      }
+    );
+    
+    console.log('✅ Token generado correctamente');
+    
+    // Intentar actualizar last_login si existe la columna
+    try {
+      const [columns] = await connection.query(
+        `SHOW COLUMNS FROM usuarios LIKE 'last_login'`
+      );
+      
+      if (columns.length > 0) {
+        await connection.execute(
+          'UPDATE usuarios SET last_login = NOW() WHERE id = ?',
+          [user.id]
+        );
+        console.log('✅ Último inicio de sesión actualizado');
+      } else {
+        console.log('ℹ️ La columna last_login no existe en la tabla usuarios');
+      }
+    } catch (updateError) {
+      console.warn('⚠️ No se pudo actualizar el último inicio de sesión:', updateError.message);
+      // Continuar a pesar del error
+    }
+    
+    // Preparar respuesta exitosa
+    const responseData = {
+      success: true,
+      message: 'Inicio de sesión exitoso',
+      token,
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        username: user.username,
+        role: user.role
+      }
+    };
+    
+    console.log('✅ Inicio de sesión exitoso. Enviando respuesta:', JSON.stringify({
+      ...responseData,
+      token: '***JWT_TOKEN***' // No mostramos el token completo en los logs
+    }));
+    
+    // Configurar la cookie HTTP-only
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Solo enviar sobre HTTPS en producción
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24 horas
+    });
+    
+    // Enviar la respuesta con el token en el cuerpo también (para el cliente)
+    res.json(responseData);
+    
+  } catch (error) {
+    console.error('❌ Error en el proceso de inicio de sesión:', error);
+    
+    // Manejar errores específicos
+    let errorMessage = 'Error al iniciar sesión';
+    let statusCode = 500;
+    
+    if (error.code === 'ECONNREFUSED') {
+      errorMessage = 'No se pudo conectar a la base de datos';
+    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+      errorMessage = 'Error de autenticación con la base de datos';
+    }
+    
+    res.status(statusCode).json({ 
+      success: false,
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+    
+  } finally {
+    // Liberar la conexión de vuelta al pool
+    if (connection) {
+      await connection.release();
+      console.log('🔌 Conexión liberada al pool');
+    }
+    console.log('=== FIN DE LA SOLICITUD DE INICIO DE SESIÓN ===\n');
+  }
+});
+
+// Importar rutas de módulos
+const moduloRoutes = require('./routes/moduloRoutes');
+
+// Rutas de la API
+app.use('/api/modulos', moduloRoutes);
+
+// Ruta protegida de ejemplo
+app.get('/api/user', authenticateToken, (req, res) => {
+  res.json({ user: req.user });
+});
+
+// Servir archivos estáticos de la aplicación
+app.use(express.static(path.join(__dirname, '../src')));
+
+// Ruta para manejar todas las demás peticiones y devolver el index.html apropiado
+app.get('*', (req, res) => {
+  const validPaths = [
+    '/pages/login',
+    '/pages/panel-estudiante',
+    // Agregar aquí otras rutas válidas de la aplicación
+  ];
+
+  // Si es una petición a la API, devolver 404
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Ruta de API no encontrada' });
+  }
+
+  // Si es un archivo estático (tiene extensión), devolver 404
+  if (path.extname(req.path)) {
+    return res.status(404).send('Archivo no encontrado');
+  }
+
+  // Verificar si la ruta solicitada es válida
+  const isValidPath = validPaths.some(validPath => 
+    req.path.startsWith(validPath) || req.path === '/' || req.path === ''
+  );
+
+  if (!isValidPath) {
+    console.warn(`Ruta no válida solicitada: ${req.path}`);
+    return res.redirect('/pages/login');
+  }
+
+  // Determinar qué archivo servir basado en la ruta
+  let filePath;
+  if (req.path === '/' || req.path.startsWith('/pages/login')) {
+    filePath = path.join(__dirname, '../src/pages/login/index.html');
+  } else if (req.path.startsWith('/pages/panel-estudiante')) {
+    filePath = path.join(__dirname, '../src/pages/panel-estudiante/index.html');
+  } else {
+    // Redirigir a login por defecto
+    return res.redirect('/pages/login');
+  }
+
+  // Verificar si el archivo existe
+  if (fs.existsSync(filePath)) {
+    console.log(`Sirviendo archivo: ${filePath}`);
+    return res.sendFile(filePath);
+  }
+
+  // Si el archivo no existe, redirigir al login
+  console.error(`Archivo no encontrado: ${filePath}`);
+  res.redirect('/pages/login');
+});
+
+// Iniciar servidor
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
+
+// Manejo de errores
+process.on('unhandledRejection', (err) => {
+  console.error('Error no manejado:', err);
+  process.exit(1);
+});

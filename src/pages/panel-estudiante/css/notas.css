@@ -1,0 +1,142 @@
+/* Estilos para el sistema de notas y tareas del estudiante */
+
+/* Tarjetas de notas */
+.card-nota {
+    border-left: 4px solid #4e73df;
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+}
+
+.card-nota:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-nota .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    font-weight: 600;
+}
+
+/* Editor de notas */
+.editor-notas {
+    min-height: 200px;
+    border: 1px solid #d1d3e2;
+    border-radius: 0.35rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Lista de tareas */
+.lista-tareas {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tarea-item {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e3e6f0;
+    margin-bottom: 0.5rem;
+    border-radius: 0.35rem;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    transition: all 0.3s;
+}
+
+.tarea-item:hover {
+    background-color: #f8f9fc;
+}
+
+.tarea-item.completada {
+    opacity: 0.7;
+    text-decoration: line-through;
+    background-color: #f0f4f8;
+}
+
+.tarea-checkbox {
+    margin-right: 1rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+}
+
+/* Calendario de estudio */
+.calendario-estudio {
+    background-color: white;
+    border-radius: 0.35rem;
+    padding: 1rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+/* Pestañas personalizadas */
+.nav-tabs .nav-link {
+    color: #6c757d;
+    font-weight: 600;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: #4e73df;
+    background-color: transparent;
+    border-bottom: 3px solid #4e73df;
+}
+
+/* Tarjetas de estadísticas */
+.card-estadistica {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    transition: transform 0.3s;
+}
+
+.card-estadistica:hover {
+    transform: translateY(-5px);
+}
+
+.card-estadistica .card-body {
+    padding: 1.5rem;
+}
+
+/* Barra de búsqueda */
+.barra-busqueda {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.barra-busqueda input {
+    padding-left: 2.5rem;
+    border-radius: 2rem;
+    border: 1px solid #d1d3e2;
+}
+
+.barra-busqueda i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #b7b9cc;
+}
+
+/* Botones de acción */
+.btn-accion {
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    .card-estadistica {
+        margin-bottom: 1rem;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+}

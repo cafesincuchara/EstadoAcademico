@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Sistema Académico</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #f8f9fc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-container {
+      max-width: 400px;
+      width: 100%;
+      padding: 2rem;
+    }
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .card-header {
+      background-color: #4e73df;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      border-radius: 10px 10px 0 0 !important;
+    }
+    .btn-primary {
+      background-color: #4e73df;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #2e59d9;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="card">
+      <div class="card-header py-3">
+        <h4 class="m-0">Sistema Académico</h4>
+      </div>
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
+          <h4>Iniciar Sesión</h4>
+          <p class="text-muted">Ingresa tus credenciales para acceder</p>
+        </div>
+        
+        <form id="loginForm">
+          <div class="mb-3">
+            <label for="username" class="form-label">Nombre de Usuario</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-user"></i></span>
+              <input type="text" class="form-control" id="username" placeholder="Ingresa tu nombre de usuario" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-lock"></i></span>
+              <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+            </div>
+          </div>
+          
+          <div class="mb-4 form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="modoAdmin">
+            <label class="form-check-label" for="modoAdmin">Modo Administrador</label>
+          </div>
+          
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+            </button>
+          </div>
+          
+          <div id="errorMsg" class="alert alert-danger mt-3 d-none" role="alert"></div>
+          
+          <div class="text-center mt-4">
+            <div class="card bg-light mb-3">
+              <div class="card-body p-3">
+                <h6 class="card-title mb-3">Credenciales de Prueba</h6>
+                <div class="d-flex flex-column gap-2 small text-start">
+                  <div>
+                    <strong>Estudiante:</strong><br>
+                    Usuario: estudiante@ejemplo.com<br>
+                    Contraseña: Estudiante123
+                  </div>
+                  <div class="mt-2">
+                    <strong>Profesor:</strong><br>
+                    Usuario: profesor@ejemplo.com<br>
+                    Contraseña: Profesor123
+                  </div>
+                  <div class="mt-2">
+                    <strong>Administrador:</strong><br>
+                    Usuario: admin@ejemplo.com<br>
+                    Contraseña: Admin123
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <p class="mb-2">¿No tienes una cuenta? <a href="/src/pages/registro/index.html" class="text-decoration-none">Regístrate aquí</a></p>
+              <a href="#" class="text-decoration-none small">¿Olvidaste tu contraseña?</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Auth JS -->
+  <script src="../../js/auth.js"></script>
+  <script>
+    console.log('auth.js cargado correctamente:', window.auth);
+  </script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById('loginForm');
+      const errorMsg = document.getElementById('errorMsg');
+      const loader = document.createElement('div');
+      loader.id = 'loader';
+      loader.className = 'spinner-border text-primary d-none';
+      loader.role = 'status';
+      loginForm.appendChild(loader);
+
+      // Si ya está autenticado, redirigir al panel correspondiente
+      if (window.auth && window.auth.isAuthenticated()) {
+        const userData = window.auth.getUserData();
+        redirectByRole(userData.role);
+        return;
+      }
+
+      // Validación del formulario
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('username').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+        const isAdmin = document.getElementById('modoAdmin').checked;
+
+        // Validaciones básicas
+        if (!email || !password) {
+          showError('Por favor completa todos los campos');
+          return;
+        }
+
+        try {
+          // Mostrar loader
+          loginForm.classList.add('was-validated');
+          const submitButton = loginForm.querySelector('button[type="submit"]');
+          submitButton.disabled = true;
+          loader.classList.remove('d-none');
+          
+          // Enviar credenciales al servidor
+          const response = await fetch('http://localhost:4000/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Error al iniciar sesión');
+          }
+          
+          // Verificar si el modo admin está marcado para usuarios admin
+          if (data.user.role === 'admin' && !isAdmin) {
+            throw new Error('Por favor activa el modo administrador para acceder como administrador');
+          }
+          
+          // Guardar datos de autenticación
+          if (window.auth) {
+            window.auth.setAuthData(data.token, {
+              email: data.user.email,
+              name: data.user.nombre,
+              role: data.user.role,
+              id: data.user.id,
+              isAdmin: data.user.role === 'admin'
+            });
+            
+            // Redirigir según el rol
+            redirectByRole(data.user.role);
+          } else {
+            throw new Error('Error al inicializar la autenticación');
+          }
+          
+        } catch (error) {
+          console.error('Error al iniciar sesión:', error);
+          showError(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+        } finally {
+          // Ocultar loader y habilitar botón
+          loader.classList.add('d-none');
+          const submitButton = loginForm.querySelector('button[type="submit"]');
+          if (submitButton) submitButton.disabled = false;
+        }
+      });
+
+      /**
+       * Redirige al usuario según su rol
+       * @param {string} role - Rol del usuario
+       */
+      function redirectByRole(role) {
+        let redirectPath = '/';
+        
+        switch(role) {
+          case 'admin':
+            redirectPath = '/pages/admin/dashboard.html';
+            break;
+          case 'profesor':
+            redirectPath = '/pages/panel-profesor/index.html';
+            break;
+          case 'estudiante':
+          default:
+            redirectPath = '/pages/estudiante/dashboard.html';
+        }
+        
+        window.location.href = redirectPath;
+      }
+
+      /**
+       * Muestra un mensaje de error
+       * @param {string} message - Mensaje de error a mostrar
+       */
+      function showError(message) {
+        if (errorMsg) {
+          errorMsg.textContent = message;
+          errorMsg.classList.remove('d-none');
+        } else {
+          alert(message);
+        }
+      } else {
+            console.error('Error: No se pudo inicializar el módulo de autenticación');
+            showError('Error al iniciar sesión. Por favor, recarga la página.');
+          }
+          
+        } else {
+          showError('Usuario o contraseña incorrectos');
+        }
+      });
+      
+      /**
+       * Redirige al usuario según su rol
+       * @param {string} role - Rol del usuario
+       */
+      function redirectByRole(role) {
+        switch(role) {
+          case 'admin':
+            window.location.href = '/src/pages/panel-admin/index.html';
+            break;
+          case 'profesor':
+            window.location.href = '/src/pages/panel-profesor/index.html';
+            break;
+          case 'estudiante':
+          default:
+            window.location.href = '/src/pages/panel-estudiante/index.html';
+        }
+      }
+
+      function showError(message) {
+        errorMsg.textContent = message;
+        errorMsg.classList.remove('d-none');
+        setTimeout(() => errorMsg.classList.add('d-none'), 5000);
+      }
+    });
+  </script>
+</body>
+</html>

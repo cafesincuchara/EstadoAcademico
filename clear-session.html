@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Limpieza de Sesión</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Limpieza de Sesión</h1>
+    <p>Este limpiador te ayudará a cerrar la sesión y eliminar todos los datos locales.</p>
+    
+    <div>
+        <button id="clearBtn">Limpiar Sesión</button>
+        <button id="refreshBtn">Recargar Página</button>
+    </div>
+    
+    <div id="status"></div>
+
+    <script>
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            const status = document.getElementById('status');
+            status.textContent = 'Limpiando datos...';
+            status.className = '';
+            
+            try {
+                // Limpiar localStorage
+                localStorage.clear();
+                console.log('localStorage limpiado');
+                
+                // Limpiar sessionStorage
+                sessionStorage.clear();
+                console.log('sessionStorage limpiado');
+                
+                // Limpiar cookies
+                document.cookie.split(';').forEach(c => {
+                    const key = c.trim().split('=')[0];
+                    document.cookie = `${key}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+                });
+                console.log('Cookies limpiadas');
+                
+                // Forzar recarga sin caché
+                window.location.href = 'http://localhost:4000/login?cleared=1';
+                
+            } catch (error) {
+                console.error('Error al limpiar:', error);
+                status.textContent = 'Error al limpiar la sesión. Ver la consola para más detalles.';
+                status.className = 'error';
+            }
+        });
+        
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            window.location.reload(true);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Estudiante - Sistema Académico</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #f8f9fc;
+            --accent-color: #2e59d9;
+            --text-color: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s;
+            padding: 0.75rem 1rem;
+            border-radius: 0.35rem;
+            margin: 0.2rem 0.5rem;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link i {
+            width: 1.5rem;
+            text-align: center;
+            margin-right: 0.5rem;
+        }
+        
+        .progress {
+            height: 1rem;
+            border-radius: 0.5rem;
+        }
+        
+        .icon-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 100%;
+        }
+        
+        .circular-progress {
+            transform: rotate(-90deg);
+        }
+        
+        .bg-circle {
+            stroke: #e9ecef;
+            stroke-width: 12;
+            fill: none;
+        }
+        
+        .progress-circle {
+            stroke: #4e73df;
+            stroke-width: 12;
+            fill: none;
+            stroke-dasharray: 339.292;
+            stroke-dashoffset: 203.575;
+            stroke-linecap: round;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0 sidebar">
+                <div class="text-center py-4">
+                    <img src="https://ui-avatars.com/api/?name=Estudiante" alt="Estudiante" class="rounded-circle" width="80" id="estudianteAvatar">
+                    <h5 class="mt-3 mb-0" id="estudianteNombre">Cargando...</h5>
+                    <small class="text-white-50" id="estudianteCarrera">Estudiante</small>
+                </div>
+                <hr class="bg-white mx-3">
+                <ul class="nav flex-column px-3">
+                    <li class="nav-item">
+                        <a href="#dashboard" class="nav-link active" data-bs-toggle="tab">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#cursos" class="nav-link" data-bs-toggle="tab">
+                            <i class="fas fa-book"></i> Mis Cursos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#calificaciones" class="nav-link" data-bs-toggle="tab">
+                            <i class="fas fa-star"></i> Calificaciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#horario" class="nav-link" data-bs-toggle="tab">
+                            <i class="fas fa-calendar-alt"></i> Horario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#tareas" class="nav-link" data-bs-toggle="tab">
+                            <i class="fas fa-tasks"></i> Tareas
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a href="#" class="nav-link" id="btnCerrarSesion">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ms-sm-auto px-0">
+                <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                    <div class="container-fluid">
+                        <button class="btn btn-link d-md-none" id="sidebarToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="d-flex align-items-center">
+                            <h4 class="mb-0">Panel del Estudiante</h4>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="dropdown">
+                                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-bell me-2"></i>
+                                    <span class="position-relative">
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            3
+                                        </span>
+                                    </span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><h6 class="dropdown-header">Notificaciones</h6></li>
+                                    <li><a class="dropdown-item" href="#">Nueva tarea de Matemáticas</a></li>
+                                    <li><a class="dropdown-item" href="#">Calificación publicada en Física</a></li>
+                                    <li><a class="dropdown-item" href="#">Recordatorio: Próximo examen</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-center" href="#">Ver todas</a></li>
+                                </ul>
+                            </div>
+                            <div class="dropdown ms-3">
+                                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle fa-lg"></i>
+                                    <span class="ms-2 d-none d-md-inline" id="nombreUsuario">Estudiante</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" id="btnCerrarSesionTop"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="container-fluid py-4">
+                    <div class="tab-content">
+                        <!-- Dashboard -->
+                        <div class="tab-pane fade show active" id="dashboard">
+                            <h4 class="mb-4">Bienvenido de vuelta, <span id="nombreEstudiante">Estudiante</span></h4>
+                            
+                            <!-- Stats Cards -->
+                            <div class="row">
+                                <div class="col-md-3 mb-4">
+                                    <div class="card border-left-primary h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="text-xs">Promedio General</span>
+                                                    <h2 class="mb-0" id="promedioGeneral">0.0</h2>
+                                                </div>
+                                                <div class="icon-circle bg-primary text-white">
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                    <div class="card border-left-success h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="text-xs">Cursos Inscritos</span>
+                                                    <h2 class="mb-0" id="cursosInscritos">0</h2>
+                                                </div>
+                                                <div class="icon-circle bg-success text-white">
+                                                    <i class="fas fa-book"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                    <div class="card border-left-info h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="text-xs">Tareas Pendientes</span>
+                                                    <h2 class="mb-0" id="tareasPendientes">0</h2>
+                                                </div>
+                                                <div class="icon-circle bg-info text-white">
+                                                    <i class="fas fa-tasks"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                    <div class="card border-left-warning h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="text-xs">Asistencia</span>
+                                                    <h2 class="mb-0" id="porcentajeAsistencia">0%</h2>
+                                                </div>
+                                                <div class="icon-circle bg-warning text-white">
+                                                    <i class="fas fa-calendar-check"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Próximas Actividades</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover" id="proximasActividades">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Actividad</th>
+                                                            <th>Curso</th>
+                                                            <th>Fecha</th>
+                                                            <th>Estado</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="4" class="text-center">Cargando actividades...</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Progreso del Semestre</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="text-center mb-3">
+                                                <div class="position-relative d-inline-block">
+                                                    <svg width="120" height="120" viewBox="0 0 120 120" class="circular-progress">
+                                                        <circle class="bg-circle" cx="60" cy="60" r="54" fill="none" stroke="#e9ecef" stroke-width="12"></circle>
+                                                        <circle class="progress-circle" cx="60" cy="60" r="54" fill="none" stroke="#4e73df" stroke-width="12" stroke-dasharray="339.292" stroke-dashoffset="203.575" stroke-linecap="round"></circle>
+                                                    </svg>
+                                                    <div class="position-absolute top-50 start-50 translate-middle">
+                                                        <span class="h4 mb-0" id="progresoSemestre">40%</span>
+                                                    </div>
+                                                </div>
+                                                <p class="mt-2 mb-0">Días transcurridos</p>
+                                            </div>
+                                            <div class="mt-3">
+                                                <h6>Próximos eventos</h6>
+                                                <ul class="list-group list-group-flush">
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                        <span>Examen parcial</span>
+                                                        <span class="badge bg-primary rounded-pill">3 días</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                        <span>Entrega de proyecto</span>
+                                                        <span class="badge bg-warning text-dark rounded-pill">1 semana</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                        <span>Vacaciones</span>
+                                                        <span class="badge bg-success rounded-pill">2 semanas</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Otras pestañas con contenido de ejemplo -->
+                        <div class="tab-pane fade" id="cursos">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4>Mis Cursos</h4>
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i> Inscribir Curso
+                                </button>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p>Lista de cursos se cargará aquí...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="calificaciones">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4>Mis Calificaciones</h4>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-secondary active" data-periodo="actual">Período Actual</button>
+                                    <button type="button" class="btn btn-outline-secondary" data-periodo="anterior">Período Anterior</button>
+                                    <button type="button" class="btn btn-outline-secondary" data-periodo="todos">Todos</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Resumen de Calificaciones -->
+                            <div class="row mb-4">
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted mb-2">Promedio General</h6>
+                                            <h2 class="mb-0 text-primary" id="promedioGeneralNotas">0.0</h2>
+                                            <small class="text-muted">Sobre 10.0</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted mb-2">Mejor Calificación</h6>
+                                            <h2 class="mb-0 text-success" id="mejorCalificacion">0.0</h2>
+                                            <small class="text-muted" id="mejorMateria">-</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted mb-2">Peor Calificación</h6>
+                                            <h2 class="mb-0 text-danger" id="peorCalificacion">0.0</h2>
+                                            <small class="text-muted" id="peorMateria">-</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted mb-2">Estado Actual</h6>
+                                            <h2 class="mb-0" id="estadoAcademico">-</h2>
+                                            <small class="text-muted" id="promedioNecesario"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Gráfico de Rendimiento -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Rendimiento por Asignatura</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="position: relative; height:300px;">
+                                        <canvas id="graficoRendimiento"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tabla de Calificaciones -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Detalle de Calificaciones</h6>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownFiltroMateria" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Todas las materias
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" id="filtroMateria">
+                                            <li><a class="dropdown-item active" href="#" data-materia="todas">Todas las materias</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <!-- Se llenará dinámicamente -->
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="tablaCalificaciones">
+                                            <thead>
+                                                <tr>
+                                                    <th>Asignatura</th>
+                                                    <th>1er Parcial</th>
+                                                    <th>2do Parcial</th>
+                                                    <th>3er Parcial</th>
+                                                    <th>Examen Final</th>
+                                                    <th>Promedio</th>
+                                                    <th>Estado</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="8" class="text-center">Cargando calificaciones...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal para ver detalles de calificación -->
+                            <div class="modal fade" id="modalDetalleCalificacion" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalDetalleCalificacionLabel">Detalle de Calificación</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <h5 id="modalMateriaTitulo">-</h5>
+                                            <p class="text-muted mb-4" id="modalMateriaProfesor">Profesor: -</p>
+                                            
+                                            <div class="row mb-4">
+                                                <div class="col-md-6">
+                                                    <div class="card h-100">
+                                                        <div class="card-body">
+                                                            <h6 class="text-muted">Promedio Actual</h6>
+                                                            <h2 class="mb-0" id="modalPromedioActual">0.0</h2>
+                                                            <div class="progress mt-2" style="height: 8px;">
+                                                                <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="modalBarraProgreso"></div>
+                                                            </div>
+                                                            <small class="text-muted">Minimo para aprobar: 7.0</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card h-100">
+                                                        <div class="card-body">
+                                                            <h6 class="text-muted">Estado</h6>
+                                                            <h4 class="mb-0"><span class="badge" id="modalEstadoMateria">-</span></h4>
+                                                            <p class="mt-2 mb-0" id="modalNotaNecesaria"></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <h6 class="mb-3">Detalle de Evaluaciones</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Evaluación</th>
+                                                            <th>Fecha</th>
+                                                            <th>Calificación</th>
+                                                            <th>Ponderación</th>
+                                                            <th>Estado</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="modalDetalleEvaluaciones">
+                                                        <tr>
+                                                            <td colspan="5" class="text-center">Cargando evaluaciones...</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                            <button type="button" class="btn btn-primary">Solicitar Revisión</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="horario">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4>Mi Horario</h4>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-secondary">Semana</button>
+                                    <button type="button" class="btn btn-outline-secondary active">Mes</button>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div id="calendario"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="tareas">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4>Mis Tareas</h4>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-secondary active">Todas</button>
+                                    <button type="button" class="btn btn-outline-secondary">Pendientes</button>
+                                    <button type="button" class="btn btn-outline-secondary">Entregadas</button>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p>Lista de tareas se cargará aquí...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js'></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Datos de ejemplo para las calificaciones
+        window.datosCalificaciones = {
+            actual: [
+                {
+                    id: 1,
+                    asignatura: 'Matemáticas Avanzadas',
+                    profesor: 'Dr. Juan Pérez',
+                    promedio: 8.5,
+                    parcial1: 8.0,
+                    parcial2: 7.8,
+                    parcial3: 9.2,
+                    examenFinal: 8.7,
+                    estado: 'Aprobado',
+                    evaluaciones: [
+                        { nombre: 'Parcial 1', fecha: '2023-03-15', calificacion: 8.5, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Tarea 1', fecha: '2023-03-10', calificacion: 9.0, ponderacion: '10%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 2', fecha: '2023-04-20', calificacion: 7.8, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Proyecto', fecha: '2023-05-10', calificacion: 9.5, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 3', fecha: '2023-05-25', calificacion: 9.2, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Examen Final', fecha: '2023-06-15', calificacion: 8.7, ponderacion: '30%', estado: 'Aprobado' }
+                    ]
+                },
+                {
+                    id: 2,
+                    asignatura: 'Física Cuántica',
+                    profesor: 'Dra. Ana López',
+                    parcial1: 7.2,
+                    parcial2: 6.5,
+                    parcial3: 8.0,
+                    examenFinal: 7.8,
+                    promedio: 7.38,
+                    estado: 'Aprobado',
+                    evaluaciones: [
+                        { nombre: 'Parcial 1', fecha: '2023-03-10', calificacion: 7.2, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Laboratorio 1', fecha: '2023-03-20', calificacion: 8.0, ponderacion: '15%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 2', fecha: '2023-04-15', calificacion: 6.5, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Laboratorio 2', fecha: '2023-05-05', calificacion: 7.5, ponderacion: '15%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 3', fecha: '2023-05-20', calificacion: 8.0, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Examen Final', fecha: '2023-06-10', calificacion: 7.8, ponderacion: '30%', estado: 'Aprobado' }
+                    ]
+                },
+                {
+                    id: 3,
+                    asignatura: 'Programación Avanzada',
+                    profesor: 'Ing. Carlos Ramírez',
+                    parcial1: 9.0,
+                    parcial2: 8.7,
+                    parcial3: 9.5,
+                    examenFinal: 9.8,
+                    promedio: 9.25,
+                    estado: 'Aprobado',
+                    evaluaciones: [
+                        { nombre: 'Proyecto 1', fecha: '2023-03-05', calificacion: 9.0, ponderacion: '15%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 1', fecha: '2023-03-25', calificacion: 9.0, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Proyecto 2', fecha: '2023-04-10', calificacion: 9.5, ponderacion: '15%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 2', fecha: '2023-04-30', calificacion: 8.7, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 3', fecha: '2023-05-22', calificacion: 9.5, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Proyecto Final', fecha: '2023-06-05', calificacion: 10.0, ponderacion: '10%', estado: 'Aprobado' },
+                        { nombre: 'Examen Final', fecha: '2023-06-20', calificacion: 9.8, ponderacion: '30%', estado: 'Aprobado' }
+                    ]
+                },
+                {
+                    id: 4,
+                    asignatura: 'Inglés Técnico',
+                    profesor: 'Lic. Laura Gómez',
+                    parcial1: 8.0,
+                    parcial2: 7.5,
+                    parcial3: 7.0,
+                    examenFinal: null,
+                    promedio: 7.5,
+                    estado: 'Cursando',
+                    evaluaciones: [
+                        { nombre: 'Parcial 1', fecha: '2023-03-12', calificacion: 8.0, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Presentación', fecha: '2023-04-02', calificacion: 8.5, ponderacion: '15%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 2', fecha: '2023-04-25', calificacion: 7.5, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Ensayo', fecha: '2023-05-15', calificacion: 7.0, ponderacion: '15%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 3', fecha: '2023-06-05', calificacion: 7.0, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Examen Final', fecha: '2023-06-25', calificacion: null, ponderacion: '30%', estado: 'Pendiente' }
+                    ]
+                },
+                {
+                    id: 5,
+                    asignatura: 'Bases de Datos',
+                    profesor: 'M. en C. Roberto Sánchez',
+                    parcial1: 6.8,
+                    parcial2: 5.5,
+                    parcial3: 6.0,
+                    examenFinal: null,
+                    promedio: 6.1,
+                    estado: 'Riesgo',
+                    evaluaciones: [
+                        { nombre: 'Parcial 1', fecha: '2023-03-08', calificacion: 6.8, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Práctica 1', fecha: '2023-03-22', calificacion: 7.0, ponderacion: '10%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 2', fecha: '2023-04-18', calificacion: 5.5, ponderacion: '20%', estado: 'Reprobado' },
+                        { nombre: 'Práctica 2', fecha: '2023-05-08', calificacion: 6.5, ponderacion: '10%', estado: 'Aprobado' },
+                        { nombre: 'Parcial 3', fecha: '2023-05-28', calificacion: 6.0, ponderacion: '20%', estado: 'Aprobado' },
+                        { nombre: 'Proyecto', fecha: '2023-06-10', calificacion: 6.5, ponderacion: '10%', estado: 'Aprobado' },
+                        { nombre: 'Examen Final', fecha: '2023-06-28', calificacion: null, ponderacion: '30%', estado: 'Pendiente' }
+                    ]
+                }
+            ],
+            anterior: [
+                // Datos del período anterior...
+            ],
+            todos: []
+        };
+
+        // Función auxiliar para determinar la clase del badge según el estado
+        function getBadgeClass(estado) {
+            switch(estado.toLowerCase()) {
+                case 'pendiente': return 'warning';
+                case 'en progreso': return 'info';
+                case 'por empezar': return 'secondary';
+                case 'completado': return 'success';
+                case 'atrasado': 
+                case 'reprobado':
+                    return 'danger';
+                case 'aprobado':
+                    return 'success';
+                case 'cursando':
+                    return 'primary';
+                case 'riesgo':
+                    return 'warning';
+                default: return 'secondary';
+            }
+        }
+
+        // Función para cargar los datos del dashboard
+        async function cargarDatosDashboard() {
+            try {
+                // Aquí irían las llamadas a la API para obtener los datos
+                // Por ahora usamos datos de ejemplo
+                document.getElementById('promedioGeneral').textContent = '8.7';
+                document.getElementById('cursosInscritos').textContent = '5';
+                document.getElementById('tareasPendientes').textContent = '3';
+                document.getElementById('porcentajeAsistencia').textContent = '92%';
+                document.getElementById('progresoSemestre').textContent = '40%';
+                
+                // Actualizar tabla de próximas actividades
+                const actividades = [
+                    { actividad: 'Examen de Matemáticas', curso: 'Matemáticas IV', fecha: '2023-06-25', estado: 'Pendiente' },
+                    { actividad: 'Entrega de Proyecto', curso: 'Programación Web', fecha: '2023-06-28', estado: 'En progreso' },
+                    { actividad: 'Tarea de Física', curso: 'Física II', fecha: '2023-06-30', estado: 'Pendiente' },
+                    { actividad: 'Presentación', curso: 'Inglés Técnico', fecha: '2023-07-02', estado: 'Por empezar' }
+                ];
+                
+                // Destruir DataTable si ya existe
+                if ($.fn.DataTable.isDataTable('#proximasActividades')) {
+                    $('#proximasActividades').DataTable().destroy();
+                }
+                
+                const tbody = document.querySelector('#proximasActividades tbody');
+                if (tbody) {
+                    tbody.innerHTML = actividades.map(act => `
+                        <tr>
+                            <td>${act.actividad}</td>
+                            <td>${act.curso}</td>
+                            <td>${act.fecha}</td>
+                            <td><span class="badge bg-${getBadgeClass(act.estado)}">${act.estado}</span></td>
+                        </tr>
+                    `).join('');
+                    
+                    // Inicializar DataTable después de cargar los datos
+                    if ($.fn.DataTable) {
+                        $('#proximasActividades').DataTable({
+                            "language": {
+                                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                            },
+                            "order": [[2, "asc"], [0, "asc"]],
+                            "responsive": true,
+                            "autoWidth": false
+                        });
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error al cargar los datos del dashboard:', error);
+            }
+        }
+        
+        // Actualizar el resumen de calificaciones
+        function actualizarResumenCalificaciones() {
+            const calificaciones = datosCalificaciones.actual || [];
+            const promedios = calificaciones.map(c => c.promedio).filter(p => p !== null);
+            
+            if (promedios.length > 0) {
+                const sumaPromedios = promedios.reduce(function(a, b) { return a + b; }, 0);
+                const promedioGeneral = (sumaPromedios / promedios.length).toFixed(2);
+                const promedioElement = document.getElementById('promedioGeneralNotas');
+                if (promedioElement) {
+                    promedioElement.textContent = promedioGeneral;
+                }
+                
+                // Actualizar mejor y peor calificación
+                const mejor = calificaciones.reduce(function(prev, current) {
+                    return (prev.promedio > current.promedio) ? prev : current;
+                });
+                const peor = calificaciones.reduce(function(prev, current) {
+                    return (prev.promedio < current.promedio) ? prev : current;
+                });
+                
+                document.getElementById('mejorCalificacion').textContent = mejor.promedio.toFixed(1);
+                document.getElementById('mejorMateria').textContent = mejor.asignatura;
+                document.getElementById('peorCalificacion').textContent = peor.promedio.toFixed(1);
+                document.getElementById('peorMateria').textContent = peor.asignatura;
+                
+                // Actualizar estado académico
+                const estadoAcademico = document.getElementById('estadoAcademico');
+                const promedioNecesario = document.getElementById('promedioNecesario');
+                
+                if (promedioGeneral >= 8.0) {
+                    estadoAcademico.innerHTML = '<span class="badge bg-success">Excelente</span>';
+                    if (promedioNecesario) {
+                        promedioNecesario.textContent = '¡Sigue así!';
+                    }
+                } else if (promedioGeneral >= 7.0) {
+                    estadoAcademico.innerHTML = '<span class="badge bg-primary">Bueno</span>';
+                    if (promedioNecesario) {
+                        promedioNecesario.textContent = 'Necesitas ' + (8.0 - parseFloat(promedioGeneral)).toFixed(2) + ' para alcanzar excelencia';
+                    }
+                } else {
+                    estadoAcademico.innerHTML = '<span class="badge bg-warning">En riesgo</span>';
+                    if (promedioNecesario) {
+                        promedioNecesario.textContent = 'Necesitas ' + (7.0 - parseFloat(promedioGeneral)).toFixed(2) + ' para aprobar';
+                    }
+                }
+            }
+        }
+        
+        // Inicializar la tabla de calificaciones
+        function inicializarTablaCalificaciones() {
+            // Verificar si la tabla existe
+            const table = $('#tablaCalificaciones');
+            if (!table.length) return;
+            
+            // Destruir DataTable si ya existe
+            if ($.fn.DataTable.isDataTable(table)) {
+                table.DataTable().destroy();
+            }
+            
+            // Limpiar el contenido existente
+            const tbody = table.find('tbody');
+            if (tbody && tbody.length > 0) {
+                tbody.empty();
+            }
+            
+            // Obtener los datos de calificaciones del período actual
+            let periodoActual = 'actual';
+            const btnPeriodoActivo = document.querySelector('.btn-periodo.active');
+            if (btnPeriodoActivo) {
+                periodoActual = btnPeriodoActivo.getAttribute('data-periodo') || 'actual';
+            }
+            const calificaciones = (window.datosCalificaciones && window.datosCalificaciones[periodoActual]) || [];
+            
+            // Crear filas de la tabla manualmente
+            if (calificaciones.length > 0) {
+                calificaciones.forEach(calificacion => {
+                    const row = `
+                        <tr>
+                            <td>${calificacion.asignatura}</td>
+                            <td class="text-center">${calificacion.parcial1 || '-'}</td>
+                            <td class="text-center">${calificacion.parcial2 || '-'}</td>
+                            <td class="text-center">${calificacion.parcial3 || '-'}</td>
+                            <td class="text-center">${calificacion.examenFinal !== null ? calificacion.examenFinal : '<span class="text-muted">Pendiente</span>'}</td>
+                            <td class="text-center fw-bold">${calificacion.promedio ? calificacion.promedio.toFixed(2) : '-'}</td>
+                            <td class="text-center"><span class="badge bg-${getBadgeClass(calificacion.estado.toLowerCase())}">${calificacion.estado}</span></td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary ver-detalle" data-id="${calificacion.id}">
+                                    <i class="fas fa-eye"></i> Detalles
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            } else {
+                tbody.html('<tr><td colspan="8" class="text-center">No hay calificaciones disponibles para este período</td></tr>');
+            }
+            
+            // Inicializar DataTable con configuración básica
+            const dataTable = table.DataTable({
+                'language': {
+                    'url': '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+                },
+                'order': [[5, 'desc']],
+                'responsive': true,
+                'autoWidth': false,
+                'columnDefs': [
+                    { 
+                        'orderable': false, 
+                        'targets': [7] // Deshabilitar ordenación en la columna de acciones
+                    }
+                ]
+            });
+            
+            // Configurar evento para ver detalles
+            dataTable.on('click', '.ver-detalle', function() {
+                try {
+                    var id = $(this).data('id');
+                    if (window.datosCalificaciones && Array.isArray(window.datosCalificaciones.actual)) {
+                        var materia = null;
+                        for (var i = 0; i < window.datosCalificaciones.actual.length; i++) {
+                            var m = window.datosCalificaciones.actual[i];
+                            if (m && m.id === id) {
+                                materia = m;
+                                break;
+                            }
+                        }
+                        if (materia) {
+                            mostrarDetalleMateria(materia);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al mostrar detalles:', error);
+                    mostrarNotificacion('Error al cargar los detalles de la materia', 'danger');
+                }
+            });
+            
+            return dataTable;
+        }
+        
+        // Mostrar el modal con los detalles de la materia
+        function mostrarDetalleMateria(materia) {
+            try {
+                // Actualizar información básica
+                const tituloElement = document.getElementById('modalMateriaTitulo');
+                const profesorElement = document.getElementById('modalMateriaProfesor');
+                const promedioElement = document.getElementById('modalPromedioActual');
+                
+                if (tituloElement) tituloElement.textContent = materia.asignatura || 'Sin nombre';
+                if (profesorElement) {
+                    profesorElement.textContent = 'Profesor: ' + (materia.profesor || 'No asignado');
+                }
+                if (promedioElement && materia.promedio !== undefined) {
+                    promedioElement.textContent = typeof materia.promedio === 'number' ? materia.promedio.toFixed(2) : 'N/A';
+                }
+                
+                // Actualizar barra de progreso
+                const barraProgreso = document.getElementById('modalBarraProgreso');
+                if (barraProgreso && materia.promedio !== undefined) {
+                    const porcentaje = Math.min(100, Math.max(0, (materia.promedio / 10) * 100));
+                    barraProgreso.style.width = porcentaje + '%';
+                }
+                
+                // Actualizar estado
+                const estadoElement = document.getElementById('modalEstadoMateria');
+                if (estadoElement && materia.estado) {
+                    const estado = String(materia.estado).toLowerCase();
+                    estadoElement.className = 'badge ' + getBadgeClass(estado);
+                    estadoElement.textContent = materia.estado;
+                }
+                
+                // Calcular nota necesaria para aprobar (si aplica)
+                const notaNecesariaElement = document.getElementById('modalNotaNecesaria');
+                if (notaNecesariaElement && materia && typeof materia.promedio === 'number' && materia.estado) {
+                    const estado = String(materia.estado).toLowerCase();
+                    if (materia.promedio < 7.0 && estado !== 'aprobado') {
+                        const notaNecesaria = ((7.0 * 10) - (materia.promedio * 7)) / 3;
+                        notaNecesariaElement.textContent = 
+                            'Necesitas al menos ' + notaNecesaria.toFixed(2) + ' en el examen final para aprobar';
+                    } else {
+                        notaNecesariaElement.textContent = '';
+                    }
+                }
+                
+                // Actualizar tabla de evaluaciones
+                const tbody = document.getElementById('modalDetalleEvaluaciones');
+                if (tbody) {
+                    if (Array.isArray(materia.evaluaciones) && materia.evaluaciones.length > 0) {
+                        tbody.innerHTML = materia.evaluaciones.map(evaluacion => {
+                            const calificacion = (evaluacion.calificacion !== null && evaluacion.calificacion !== undefined) 
+                                ? evaluacion.calificacion.toFixed(1) 
+                                : '<span class="text-muted">Pendiente</span>';
+                            const estado = (evaluacion.estado && typeof evaluacion.estado === 'string') 
+                                ? evaluacion.estado.toLowerCase() 
+                                : '';
+                            
+                            return `
+                                <tr>
+                                    <td>${evaluacion.nombre || '-'}</td>
+                                    <td>${evaluacion.fecha || '-'}</td>
+                                    <td class="text-center">${calificacion}</td>
+                                    <td class="text-center">${evaluacion.ponderacion || '0'}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-${getBadgeClass(estado)}">
+                                            ${evaluacion.estado || '-'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center">No hay evaluaciones disponibles</td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+                // Mostrar el modal
+                const modalElement = document.getElementById('modalDetalleCalificacion');
+                if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            } catch (error) {
+                console.error('Error al mostrar detalles de la materia:', error);
+                mostrarNotificacion('Error al cargar los detalles de la materia', 'danger');
+            }
+        }
+        
+        // Inicializar el gráfico de rendimiento
+        function inicializarGraficoRendimiento() {
+            let canvas;
+            try {
+                canvas = document.getElementById('graficoRendimiento');
+                if (!canvas) {
+                    console.error('No se encontró el elemento canvas para el gráfico');
+                    return;
+                }
+                
+                // Verificar si Chart está disponible
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js no está cargado correctamente');
+                    if (canvas.parentElement) {
+                        canvas.parentElement.innerHTML = '<p class="text-danger text-center my-4">Error: No se pudo cargar la biblioteca de gráficos.</p>';
+                    }
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('No se pudo obtener el contexto 2D del canvas');
+                    return;
+                }
+                
+                // Obtener datos actuales o usar array vacío
+                const calificaciones = window.datosCalificaciones && Array.isArray(window.datosCalificaciones.actual) ? 
+                    window.datosCalificaciones.actual : [];
+                
+                // Verificar si hay datos para mostrar
+                if (calificaciones.length === 0) {
+                    if (canvas.parentElement) {
+                        canvas.parentElement.innerHTML = '<p class="text-muted text-center my-4">No hay datos disponibles para mostrar el gráfico.</p>';
+                    }
+                    return;
+                }
+                
+                // Preparar datos para el gráfico con validación
+                const materias = calificaciones
+                    .filter(m => m && typeof m === 'object' && m.asignatura)
+                    .map(m => m.asignatura.trim() || 'Sin nombre');
+                    
+                const promedios = calificaciones.map(m => {
+                    const num = parseFloat(m && m.promedio);
+                    return isNaN(num) ? 0 : Math.min(Math.max(num, 0), 10);
+                });
+                
+                const colores = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+                
+                // Destruir instancia anterior si existe
+                if (window.rendimientoChart && typeof window.rendimientoChart.destroy === 'function') {
+                    try {
+                        window.rendimientoChart.destroy();
+                    } catch (e) {
+                        console.error('Error al destruir el gráfico anterior:', e);
+                    }
+                }
+                
+                // Crear instancia del gráfico
+                window.rendimientoChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: materias,
+                        datasets: [{
+                            label: 'Promedio',
+                            data: promedios,
+                            backgroundColor: colores,
+                            borderColor: colores.map(c => c.replace('0.7', '1')),
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Promedio: ${context.raw.toFixed(1)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                title: {
+                                    display: true,
+                                    text: 'Calificación (0-10)',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        return value.toFixed(1);
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Asignaturas',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    autoSkip: false,
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    callback: function(value) {
+                                        // Asegurar que el texto no sea demasiado largo
+                                        const maxLength = 15;
+                                        if (value.length > maxLength) {
+                                            return value.substring(0, maxLength) + '...';
+                                        }
+                                        return value;
+                                    }
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar el gráfico:', error);
+                if (canvas && canvas.parentElement) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-warning';
+                    alertDiv.role = 'alert';
+                    alertDiv.textContent = 'No se pudo cargar el gráfico de rendimiento. Por favor, intente recargar la página.';
+                    canvas.parentElement.appendChild(alertDiv);
+                }
+            }
+        }
+        
+        // Sistema de notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            const notificacion = document.createElement('div');
+            notificacion.className = `alert alert-${tipo} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+            notificacion.role = 'alert';
+            notificacion.style.zIndex = '1100';
+            notificacion.innerHTML = `
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            `;
+            document.body.appendChild(notificacion);
+            
+            // Eliminar la notificación después de 5 segundos
+            setTimeout(() => {
+                notificacion.remove();
+            }, 5000);
+        }
+        
+        // Filtrar la tabla por materia
+        function filtrarPorMateria(materia) {
+            const tabla = $('#tablaCalificaciones').DataTable();
+            if (materia === 'todas') {
+                tabla.search('').columns().search('').draw();
+            } else {
+                tabla.column(0).search(materia, true, false).draw();
+            }
+            
+            // Mostrar notificación
+            const mensaje = materia === 'todas' 
+                ? 'Mostrando todas las materias' 
+                : `Filtrando por materia: ${materia}`;
+                
+            mostrarNotificacion(mensaje, 'info');
+        }
+        
+        // Descargar boletín de calificaciones
+        function descargarBoletin() {
+            // Simular descarga
+            mostrarNotificacion('Preparando descarga del boletín...', 'info');
+            
+            // Aquí iría la lógica real de descarga
+            setTimeout(() => {
+                mostrarNotificacion('Boletín descargado correctamente', 'success');
+                
+                // Simular descarga
+                const enlace = document.createElement('a');
+                enlace.href = '#';
+                enlace.download = 'boletin_calificaciones.pdf';
+                enlace.click();
+            }, 1500);
+        }
+        
+        // Compartir calificaciones
+        function compartirCalificaciones() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Mis Calificaciones',
+                    text: 'Revisa mis calificaciones del período actual',
+                    url: window.location.href
+                })
+                .then(() => mostrarNotificacion('¡Compartido exitosamente!', 'success'))
+                .catch(error => mostrarNotificacion('Error al compartir: ' + error, 'danger'));
+            } else {
+                // Fallback para navegadores que no soportan la API de Web Share
+                mostrarNotificacion('La función de compartir no está disponible en tu navegador', 'warning');
+                
+                // Copiar al portapapeles como alternativa
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                    mostrarNotificacion('¡Enlace copiado al portapapeles!', 'success');
+                });
+            }
+        }
+        
+        // Actualizar datos según el período seleccionado
+        function actualizarDatosPeriodo(periodo) {
+            // Mostrar indicador de carga
+            const tabla = $('#tablaCalificaciones');
+            const tbody = tabla.find('tbody');
+            tbody.html('<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>');
+            
+            // Simular carga asíncrona
+            setTimeout(() => {
+                // Actualizar la tabla con los datos del período seleccionado
+                if (datosCalificaciones[periodo]) {
+                    const dataTable = $('#tablaCalificaciones').DataTable();
+                    dataTable.clear().rows.add(datosCalificaciones[periodo]).draw();
+                }
+                
+                // Actualizar el gráfico de rendimiento
+                if (typeof inicializarGraficoRendimiento === 'function') {
+                    inicializarGraficoRendimiento();
+                }
+                
+                // Actualizar el resumen de calificaciones
+                if (typeof actualizarResumenCalificaciones === 'function') {
+                    actualizarResumenCalificaciones();
+                }
+                
+                // Mostrar notificación
+                mostrarNotificacion(`Datos del período ${periodo} cargados correctamente`, 'success');
+            }, 500);
+        }
+        
+        // Inicializar la sección de calificaciones
+        function inicializarCalificaciones() {
+            // Simular carga de datos
+            setTimeout(function() {
+                // Inicializar DataTable
+                inicializarTablaCalificaciones();
+                
+                // Configurar eventos de los botones de período
+                const botonesPeriodo = document.querySelectorAll('[data-periodo]');
+                if (botonesPeriodo.length > 0) {
+                    botonesPeriodo.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            // Remover clase active de todos los botones
+                            botonesPeriodo.forEach(b => b.classList.remove('active'));
+                            // Agregar clase active al botón clickeado
+                            this.classList.add('active');
+                            // Actualizar datos según el período
+                            const periodo = this.getAttribute('data-periodo');
+                            actualizarDatosPeriodo(periodo);
+                        });
+                    });
+                }
+                
+                // Actualizar resumen de calificaciones
+                actualizarResumenCalificaciones();
+                
+                // Inicializar el gráfico
+                inicializarGraficoRendimiento();
+                
+                // Mostrar notificación de bienvenida
+                mostrarNotificacion('¡Bienvenido a tu panel de calificaciones!', 'success');
+                
+            }, 1000); // Simular tiempo de carga
+        }
+
+        // Función para mostrar notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            const tipos = {
+                'success': 'Éxito',
+                'danger': 'Error',
+                'warning': 'Advertencia',
+                'info': 'Información'
+            };
+            
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+            
+            const toastId = 'toast-' + Date.now();
+            const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-${tipo} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <strong>${tipos[tipo] || 'Notificación'}:</strong> ${mensaje}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar el toast al contenedor
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = toastHTML;
+            const toastElement = tempDiv.firstElementChild;
+            toastContainer.appendChild(toastElement);
+            
+            // Inicializar y mostrar el toast
+            const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
+            toast.show();
+            
+            // Eliminar el toast después de que se oculte
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        }
+
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded');
+            
+            // Agregar contenedor de notificaciones si no existe
+            if (!document.getElementById('toastContainer')) {
+                const toastContainer = document.createElement('div');
+                toastContainer.id = 'toastContainer';
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '11';
+                document.body.appendChild(toastContainer);
+            }
+            
+            // Configurar cierre de sesión
+            const logoutBtns = document.querySelectorAll('#btnCerrarSesion, #btnCerrarSesionTop');
+            if (logoutBtns && logoutBtns.length > 0) {
+                logoutBtns.forEach(btn => {
+                    if (btn) {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            // Aquí iría la lógica de cierre de sesión
+                            console.log('Cerrar sesión');
+                            window.location.href = '/login';
+                        });
+                    }
+                });
+            }
+            
+            // Cargar datos del estudiante (simulado)
+            document.getElementById('estudianteNombre').textContent = 'Juan Pérez';
+            document.getElementById('nombreEstudiante').textContent = 'Juan';
+            document.getElementById('nombreUsuario').textContent = 'Juan Pérez';
+            document.getElementById('estudianteAvatar').src = 'https://ui-avatars.com/api/?name=JP&background=4e73df&color=fff';
+            
+            // Inicializar componentes
+            try {
+                // Inicializar el menú desplegable de perfil
+                const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+                dropdownElementList.forEach(function(dropdownToggleEl) {
+                    return new bootstrap.Dropdown(dropdownToggleEl);
+                });
+                
+                // Inicializar tooltips
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+                
+                // Inicializar popovers
+                const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+                popoverTriggerList.forEach(function(popoverTriggerEl) {
+                    return new bootstrap.Popover(popoverTriggerEl);
+                });
+                
+                // Cargar datos del dashboard
+                cargarDatosDashboard();
+                
+                // Inicializar pestañas de Bootstrap
+                const triggerTabList = [].slice.call(document.querySelectorAll('a[data-bs-toggle="tab"]'));
+                triggerTabList.forEach(triggerEl => {
+                    const tabTrigger = new bootstrap.Tab(triggerEl);
+                    triggerEl.addEventListener('click', event => {
+                        event.preventDefault();
+                        tabTrigger.show();
+                        
+                        // Inicializar componentes específicos de cada pestaña
+                        const targetTab = triggerEl.getAttribute('href');
+                        if (targetTab === '#calificaciones' && !window.calificacionesInicializadas) {
+                            try {
+                                inicializarCalificaciones();
+                                window.calificacionesInicializadas = true;
+                            } catch (error) {
+                                console.error('Error al inicializar calificaciones:', error);
+                                mostrarNotificacion('Error al cargar las calificaciones', 'danger');
+                            }
+                        } else if (targetTab === '#dashboard') {
+                            // Asegurarse de que el gráfico se actualice al volver al dashboard
+                            if (typeof inicializarGraficoRendimiento === 'function') {
+                                inicializarGraficoRendimiento();
+                            }
+                        }
+                    });
+                });
+                
+                // Inicializar el calendario si existe
+                const calendarEl = document.getElementById('calendario');
+                if (calendarEl && typeof FullCalendar !== 'undefined') {
+                    const calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'timeGridWeek',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                        },
+                        locale: 'es',
+                        events: [
+                            {
+                                title: 'Matemáticas',
+                                daysOfWeek: ['1', '3', '5'],
+                                startTime: '08:00',
+                                endTime: '10:00',
+                                color: '#4e73df'
+                            },
+                            {
+                                title: 'Física',
+                                daysOfWeek: ['2', '4'],
+                                startTime: '10:00',
+                                endTime: '12:00',
+                                color: '#1cc88a'
+                            },
+                            {
+                                title: 'Programación',
+                                daysOfWeek: ['1', '3', '5'],
+                                startTime: '14:00',
+                                endTime: '16:00',
+                                color: '#f6c23e'
+                            }
+                        ]
+                    });
+                    calendar.render();
+                }
+                
+            } catch (error) {
+                console.error('Error al inicializar componentes:', error);
+                mostrarNotificacion('Error al cargar los datos del panel', 'danger');
+            }
+        });
+    </script>
+</body>
+</html>

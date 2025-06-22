@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Sistema Académico</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #6f42c1;
+            --secondary-color: #f8f9fc;
+            --accent-color: #5a3d8a;
+            --text-color: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+        }
+        
+        .sidebar-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            display: block;
+            border-radius: 0.35rem;
+            margin: 0.2rem 0;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0 sidebar">
+                <div class="text-center py-4">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="Admin" class="rounded-circle" width="80">
+                    <h5 class="mt-3 mb-0">Admin Principal</h5>
+                    <small class="text-white-50">Administrador</small>
+                </div>
+                <hr class="bg-white mx-3">
+                
+                <div class="px-3">
+                    <h6 class="text-uppercase text-white-50 mb-3">Principal</h6>
+                    <a href="#dashboard" class="sidebar-link active" data-bs-toggle="tab">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    
+                    <h6 class="text-uppercase text-white-50 mt-4 mb-3">Gestión</h6>
+                    <a href="#usuarios" class="sidebar-link" data-bs-toggle="tab">
+                        <i class="fas fa-users"></i> Usuarios
+                    </a>
+                    <a href="#estudiantes" class="sidebar-link" data-bs-toggle="tab">
+                        <i class="fas fa-user-graduate"></i> Estudiantes
+                    </a>
+                    <a href="#profesores" class="sidebar-link" data-bs-toggle="tab">
+                        <i class="fas fa-chalkboard-teacher"></i> Profesores
+                    </a>
+                    <a href="#cursos" class="sidebar-link" data-bs-toggle="tab">
+                        <i class="fas fa-book"></i> Cursos
+                    </a>
+                    
+                    <h6 class="text-uppercase text-white-50 mt-4 mb-3">Configuración</h6>
+                    <a href="#configuracion" class="sidebar-link" data-bs-toggle="tab">
+                        <i class="fas fa-cog"></i> Ajustes
+                    </a>
+                    <a href="#backup" class="sidebar-link" data-bs-toggle="tab">
+                        <i class="fas fa-database"></i> Respaldo
+                    </a>
+                    
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3">
+                        <a href="/" class="btn btn-outline-light w-100">
+                            <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ms-sm-auto px-0">
+                <!-- Top Navbar -->
+                <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                    <div class="container-fluid">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-bars me-3 d-md-none" id="sidebarToggle"></i>
+                            <h5 class="mb-0">Panel de Administración</h5>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="dropdown me-3">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        3
+                                    </span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <h6 class="dropdown-header">Notificaciones</h6>
+                                    <a class="dropdown-item" href="#">Nuevo usuario registrado</a>
+                                    <a class="dropdown-item" href="#">Solicitud de aprobación pendiente</a>
+                                    <a class="dropdown-item" href="#">Actualización del sistema disponible</a>
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                                    <span class="d-none d-md-inline me-2">Admin</span>
+                                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="Admin" width="32" height="32" class="rounded-circle">
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                    <a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a>
+                                    <a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item text-danger" href="#" id="btnCerrarSesion">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Page Content -->
+                <div class="container-fluid py-4">
+                    <div class="tab-content">
+                        <!-- Dashboard -->
+                        <div class="tab-pane fade show active" id="dashboard">
+                            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                                <h1 class="h2">Resumen del Sistema</h1>
+                                <div class="btn-toolbar mb-2 mb-md-0">
+                                    <div class="btn-group me-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary">Exportar</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary">Imprimir</button>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus me-1"></i> Nuevo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Stats Cards -->
+                            <div class="row">
+                                <div class="col-xl-3 col-md-6 mb-4">
+                                    <div class="card border-left-primary h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                        Usuarios Activos</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">1,258</div>
+                                                </div>
+                                                <div class="icon-circle bg-primary">
+                                                    <i class="fas fa-users text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="text-success"><i class="fas fa-arrow-up"></i> 12% desde el mes pasado</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-md-6 mb-4">
+                                    <div class="card border-left-success h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                        Ingresos (Mensual)</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">$215,000</div>
+                                                </div>
+                                                <div class="icon-circle bg-success">
+                                                    <i class="fas fa-dollar-sign text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="text-success"><i class="fas fa-arrow-up"></i> 8% desde el mes pasado</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-md-6 mb-4">
+                                    <div class="card border-left-info h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                        Tareas Pendientes</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">24</div>
+                                                </div>
+                                                <div class="icon-circle bg-info">
+                                                    <i class="fas fa-clipboard-list text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="text-danger"><i class="fas fa-arrow-down"></i> 3 desde ayer</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-md-6 mb-4">
+                                    <div class="card border-left-warning h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                        Solicitudes Pendientes</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
+                                                </div>
+                                                <div class="icon-circle bg-warning">
+                                                    <i class="fas fa-comments text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="text-success"><i class="fas fa-arrow-up"></i> 5 desde ayer</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content Row -->
+                            <div class="row">
+                                <!-- Area Chart -->
+                                <div class="col-xl-8 col-lg-7">
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                            <h6 class="m-0 font-weight-bold text-primary">Resumen de Ingresos</h6>
+                                            <div class="dropdown no-arrow">
+                                                <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                                </a>
+                                                <div class="dropdown-menu dropdown-menu-end">
+                                                    <div class="dropdown-header">Opciones:</div>
+                                                    <a class="dropdown-item" href="#">Ver Detalles</a>
+                                                    <a class="dropdown-item" href="#">Exportar Datos</a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="#">Configurar</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-area">
+                                                <canvas id="myAreaChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Pie Chart -->
+                                <div class="col-xl-4 col-lg-5">
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                            <h6 class="m-0 font-weight-bold text-primary">Distribución de Usuarios</h6>
+                                            <div class="dropdown no-arrow">
+                                                <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                                </a>
+                                                <div class="dropdown-menu dropdown-menu-end">
+                                                    <div class="dropdown-header">Opciones:</div>
+                                                    <a class="dropdown-item" href="#">Ver Detalles</a>
+                                                    <a class="dropdown-item" href="#">Exportar Datos</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-pie pt-4 pb-2">
+                                                <canvas id="myPieChart"></canvas>
+                                            </div>
+                                            <div class="mt-4 text-center small">
+                                                <span class="me-2">
+                                                    <i class="fas fa-circle text-primary"></i> Estudiantes
+                                                </span>
+                                                <span class="me-2">
+                                                    <i class="fas fa-circle text-success"></i> Profesores
+                                                </span>
+                                                <span class="me-2">
+                                                    <i class="fas fa-circle text-info"></i> Administradores
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content Row -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3">
+                                            <h6 class="m-0 font-weight-bold text-primary">Actividad Reciente</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" id="recentActivity" width="100%" cellspacing="0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Usuario</th>
+                                                            <th>Acción</th>
+                                                            <th>Fecha/Hora</th>
+                                                            <th>Estado</th>
+                                                            <th>Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>usuario@ejemplo.com</td>
+                                                            <td>Inició sesión</td>
+                                                            <td>21/06/2023 10:30 AM</td>
+                                                            <td><span class="badge bg-success">Éxito</span></td>
+                                                            <td>
+                                                                <button class="btn btn-sm btn-primary">Ver</button>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>admin@ejemplo.com</td>
+                                                            <td>Actualizó configuración</td>
+                                                            <td>21/06/2023 09:15 AM</td>
+                                                            <td><span class="badge bg-success">Éxito</span></td>
+                                                            <td>
+                                                                <button class="btn btn-sm btn-primary">Ver</button>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>profesor@ejemplo.com</td>
+                                                            <td>Subió calificaciones</td>
+                                                            <td>20/06/2023 04:45 PM</td>
+                                                            <td><span class="badge bg-success">Éxito</span></td>
+                                                            <td>
+                                                                <button class="btn btn-sm btn-primary">Ver</button>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Otras pestañas (Usuarios, Estudiantes, Profesores, etc.) -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Módulo de autenticación universal -->
+    <script src="/js/auth.js"></script>
+    
+    <script>
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticación y rol
+            if (window.auth) {
+                if (!window.auth.checkAuth('admin')) {
+                    return; // La función checkAuth ya maneja la redirección
+                }
+                
+                // Configurar cierre de sesión
+                const logoutBtn = document.getElementById('btnCerrarSesion');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        window.auth.logout();
+                    });
+                }
+                
+                // Mostrar datos del usuario si está disponible
+                const userData = window.auth.getUserData();
+                if (userData) {
+                    const userInfoElement = document.querySelector('.sidebar h5');
+                    const userAvatarElement = document.querySelector('.sidebar img');
+                    
+                    if (userInfoElement) {
+                        userInfoElement.textContent = userData.name || 'Administrador';
+                    }
+                    
+                    if (userAvatarElement) {
+                        userAvatarElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'Admin')}&background=6f42c1&color=fff`;
+                    }
+                }
+                
+                // Inicializar componentes
+                try {
+                    // Inicializar DataTables
+                    if ($.fn.DataTable) {
+                        $('.datatable, #recentActivity').DataTable({
+                            "language": {
+                                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                            },
+                            "order": [[0, "desc"]]
+                        });
+                    }
+
+                    // Inicializar Select2
+                    if ($.fn.select2) {
+                        $('.select2').select2({
+                            theme: 'bootstrap-5'
+                        });
+                    }
+                    
+                    // Toggle Sidebar en móviles
+                    $('#sidebarToggle').on('click', function() {
+                        $('.sidebar').toggleClass('d-none d-md-block');
+                    });
+
+                    // Inicializar gráficos
+                    const ctx = document.getElementById("myAreaChart");
+                    if (ctx) {
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+                                datasets: [{
+                                    label: "Ingresos",
+                                    lineTension: 0.3,
+                                    backgroundColor: "rgba(78, 115, 223, 0.05)",
+                                    borderColor: "rgba(78, 115, 223, 1)",
+                                    pointRadius: 3,
+                                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                                    pointBorderColor: "rgba(78, 115, 223, 1)",
+                                    pointHoverRadius: 3,
+                                    pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                                    pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                                    pointHitRadius: 10,
+                                    pointBorderWidth: 2,
+                                    data: [0, 10000, 5000, 15000, 10000, 20000, 15000, 25000, 20000, 30000, 25000, 40000],
+                                }],
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                layout: {
+                                    padding: {
+                                        left: 10,
+                                        right: 25,
+                                        top: 25,
+                                        bottom: 0
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: {
+                                            display: false,
+                                            drawBorder: false
+                                        },
+                                        ticks: {
+                                            maxTicksLimit: 7
+                                        }
+                                    },
+                                    y: {
+                                        ticks: {
+                                            maxTicksLimit: 5,
+                                            padding: 10,
+                                            callback: function(value, index, values) {
+                                                return '$' + value.toLocaleString();
+                                            }
+                                        },
+                                        grid: {
+                                            color: "rgb(234, 236, 244)",
+                                            zeroLineColor: "rgb(234, 236, 244)",
+                                            drawBorder: false,
+                                            borderDash: [2],
+                                            zeroLineBorderDash: [2]
+                                        }
+                                    },
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        backgroundColor: "rgb(255,255,255)",
+                                        bodyColor: "#858796",
+                                        titleMarginBottom: 10,
+                                        titleColor: '#6e707e',
+                                        titleFontSize: 14,
+                                        borderColor: '#dddfeb',
+                                        borderWidth: 1,
+                                        xPadding: 15,
+                                        yPadding: 15,
+                                        displayColors: false,
+                                        intersect: false,
+                                        mode: 'index',
+                                        caretPadding: 10,
+                                        callbacks: {
+                                            label: function(context) {
+                                                var label = context.dataset.label || '';
+                                                if (label) {
+                                                    label += ': ';
+                                                }
+                                                if (context.parsed.y !== null) {
+                                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                                }
+                                                return label;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    const ctxPie = document.getElementById("myPieChart");
+                    if (ctxPie) {
+                        new Chart(ctxPie, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ["Estudiantes", "Profesores", "Administradores"],
+                                datasets: [{
+                                    data: [70, 25, 5],
+                                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                                }],
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    tooltip: {
+                                        backgroundColor: "rgb(255,255,255)",
+                                        bodyColor: "#858796",
+                                        borderColor: '#dddfeb',
+                                        borderWidth: 1,
+                                        xPadding: 15,
+                                        yPadding: 15,
+                                        displayColors: false,
+                                        caretPadding: 10,
+                                    },
+                                    legend: {
+                                        display: false
+                                    },
+                                },
+                                cutout: '80%',
+                            },
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al inicializar componentes:', error);
+                }
+                
+            } else {
+                console.error('Error: No se pudo cargar el módulo de autenticación');
+                window.location.href = '/login';
+            }
+        });
+    </script>
+    
+    <!-- Scripts específicos del panel de administración -->
+    <script src="/js/api.js"></script>
+    <script src="/src/pages/panel-admin/js/admin-tablas.js"></script>
+    <script src="/src/pages/panel-admin/js/admin-modales.js"></script>
+    <script src="/src/pages/panel-admin/js/admin-graficos.js"></script>
+
+                        backgroundColor: "rgba(78, 115, 223, 0.05)",
+                        borderColor: "rgba(78, 115, 223, 1)",
+                        pointRadius: 3,
+                        pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                        pointBorderColor: "rgba(78, 115, 223, 1)",
+                        pointHoverRadius: 3,
+                        pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                        pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                        pointHitRadius: 10,
+                        pointBorderWidth: 2,
+                        data: [0, 10000, 5000, 15000, 10000, 20000, 15000, 25000, 20000, 30000, 25000, 40000],
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 25,
+                            top: 25,
+                            bottom: 0
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 7
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                maxTicksLimit: 5,
+                                padding: 10,
+                                callback: function(value, index, values) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: "rgb(234, 236, 244)",
+                                zeroLineColor: "rgb(234, 236, 244)",
+                                drawBorder: false,
+                                borderDash: [2],
+                                zeroLineBorderDash: [2]
+                            }
+                        },
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyColor: "#858796",
+                            titleMarginBottom: 10,
+                            titleColor: '#6e707e',
+                            titleFontSize: 14,
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            xPadding: 15,
+                            yPadding: 15,
+                            displayColors: false,
+                            intersect: false,
+                            mode: 'index',
+                            caretPadding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    var label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de pastel
+            var ctx = document.getElementById("myPieChart");
+            var myPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ["Estudiantes", "Profesores", "Administradores"],
+                    datasets: [{
+                        data: [70, 25, 5],
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                        hoverBorderColor: "rgba(234, 236, 244, 1)",
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyColor: "#858796",
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            xPadding: 15,
+                            yPadding: 15,
+                            displayColors: false,
+                            caretPadding: 10,
+                        },
+                        legend: {
+                            display: false
+                        },
+                    },
+                    cutout: '80%',
+                },
+            });
+        });
+    </script>
+</body>
+</html>

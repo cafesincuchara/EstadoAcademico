@@ -1,0 +1,361 @@
+# Dependencias
+/node_modules
+/.pnp
+.pnp.js
+
+# Archivos de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de construcción
+/build
+/dist
+/.next
+/out
+
+# Archivos de depuración
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archivos de cobertura
+/coverage
+
+# Archivos de caché
+.cache
+.eslintcache
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de configuración local
+*.local
+
+# Archivos de dependencias locales
+.pnp.*
+
+# Archivos de entorno de desarrollo local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de configuración de npm
+package-lock.json
+yarn.lock
+
+# Archivos de configuración de IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de dependencias locales
+.pnp.*
+
+# Archivos de caché
+.cache/
+.parcel-cache/
+
+# Archivos de entorno de desarrollo
+.env.development
+.env.test
+
+# Archivos de entorno de producción
+.env.production
+
+# Archivos de configuración de Visual Studio Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# Archivos de configuración de WebStorm
+.idea/
+
+# Archivos de configuración de Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Archivos de configuración de Vim
+*.swp
+*.swo
+
+# Archivos de configuración de Emacs
+*~
+\#*\#
+.#*
+
+# Archivos de configuración de IntelliJ
+*.iml
+.idea/
+
+# Archivos de configuración de Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Archivos de configuración de macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Archivos de configuración de Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Archivos de configuración de Linux
+.Trash-*
+.nfs*
+
+# Archivos de configuración de Docker
+.docker/
+
+# Archivos de configuración de Kubernetes
+.kube/
+
+# Archivos de configuración de Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Archivos de configuración de Vagrant
+.vagrant/
+
+# Archivos de configuración de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Archivos de configuración de Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de configuración de React
+coverage/
+build/
+
+# Archivos de configuración de Next.js
+.next/
+out/
+
+# Archivos de configuración de Gatsby
+.cache/
+public
+
+# Archivos de configuración de Angular
+**/bower_components/
+**/node_modules/
+**/dist/
+**/e2e/
+**/tmp/
+**/coverage/
+
+# Archivos de configuración de Vue
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Archivos de configuración de Svelte
+.svelte-kit/
+build/
+
+# Archivos de configuración de Nuxt
+.nuxt/
+.nuxt-dist/
+.nuxt-props
+
+# Archivos de configuración de Docker
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+# Archivos de configuración de Kubernetes
+*.yaml
+*.yml
+!k8s/
+
+# Archivos de configuración de Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+
+# Archivos de configuración de Vagrant
+.vagrant/
+*.box
+
+# Archivos de configuración de Ansible
+*.retry
+
+# Archivos de configuración de Packer
+packer_virtualbox-*.iso
+
+# Archivos de configuración de Vault
+.vault/
+
+# Archivos de configuración de Consul
+.consul/
+
+# Archivos de configuración de Nomad
+.nomad/
+
+# Archivos de configuración de Docker Swarm
+docker-swarm.*.yml
+
+# Archivos de configuración de Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Archivos de configuración de Helm
+.helm/
+*.tgz
+
+# Archivos de configuración de Skaffold
+.skaffold/
+
+# Archivos de configuración de Tilt
+.tiltbuild/
+
+# Archivos de configuración de Kustomize
+kustomization.yaml
+kustomization.yml
+
+# Archivos de configuración de Ksonnet
+*.jsonnet
+*.libsonnet
+
+# Archivos de configuración de Jsonnet
+vendor/
+
+# Archivos de configuración de Kubeval
+.schemas/
+
+# Archivos de configuración de Conftest
+.policy/
+
+# Archivos de configuración de OPA
+.policy-lib/
+
+# Archivos de configuración de Gatekeeper
+.gatekeeper/
+
+# Archivos de configuración de Kyverno
+.kyverno/
+
+# Archivos de configuración de Falco
+.falco/
+
+# Archivos de configuración de Anchore
+.anchore/
+
+# Archivos de configuración de Trivy
+.trivy/
+
+# Archivos de configuración de Snyk
+.snyk
+
+# Archivos de configuración de Dependabot
+.github/dependabot.yml
+
+# Archivos de configuración de Renovate
+renovate.json
+
+# Archivos de configuración de Greenkeeper
+greenkeeper.json
+
+# Archivos de configuración de Snyk
+.snyk
+
+# Archivos de configuración de Dependabot
+.github/dependabot.yml
+
+# Archivos de configuración de Renovate
+renovate.json
+
+# Archivos de configuración de Greenkeeper
+greenkeeper.json
+
+# Archivos de configuración de npm
+package-lock.json
+yarn.lock
+
+# Archivos de configuración de pnpm
+pnpm-lock.yaml
+
+# Archivos de configuración de Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Archivos de configuración de Lerna
+lerna-debug.log
+
+# Archivos de configuración de pnpm
+pnpm-debug.log
+
+# Archivos de configuración de Yarn Berry
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

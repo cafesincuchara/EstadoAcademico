@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cargar fuentes de Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Panel del Estudiante - Sistema Académico</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -71,6 +75,34 @@
         .progress {
             height: 1rem;
             border-radius: 0.5rem;
+        }
+        
+        .icon-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 100%;
+        }
+        
+        .circular-progress {
+            transform: rotate(-90deg);
+        }
+        
+        .bg-circle {
+            stroke: #e9ecef;
+            stroke-width: 12;
+            fill: none;
+        }
+        
+        .progress-circle {
+            stroke: #4e73df;
+            stroke-width: 12;
+            fill: none;
+            stroke-dasharray: 339.292;
+            stroke-dashoffset: 203.575;
+            stroke-linecap: round;
         }
     </style>
 </head>
@@ -524,205 +556,129 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- DataTables JS -->
+    <!-- DataTables -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <!-- FullCalendar JS -->
+    <!-- FullCalendar -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js'></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Módulo de autenticación -->
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Auth Module -->
     <script src="/js/auth.js"></script>
     
     <script>
-        // Verificar autenticación al cargar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar autenticación y rol
-            if (window.auth) {
-                if (!window.auth.checkAuth('estudiante')) {
-                    return; // La función checkAuth ya maneja la redirección
-                }
-                
-                // Configurar cierre de sesión
-                const logoutBtns = document.querySelectorAll('#btnCerrarSesion, #btnCerrarSesionTop');
-                logoutBtns.forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        window.auth.logout();
-                    });
-                });
-                
-                // Cargar datos del estudiante
-                const userData = window.auth.getUserData();
-                if (userData) {
-                    // Actualizar información del perfil
-                    document.getElementById('estudianteNombre').textContent = userData.name || 'Estudiante';
-                    document.getElementById('nombreEstudiante').textContent = userData.name || 'Estudiante';
-                    document.getElementById('nombreUsuario').textContent = userData.name || 'Estudiante';
-                    
-                    // Actualizar avatar con iniciales
-                    const avatar = document.getElementById('estudianteAvatar');
-                    if (avatar && userData.name) {
-                        const name = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
-                        avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4e73df&color=fff`;
-                    }
-                }
-                
-                // Inicializar componentes
-                try {
-                    // Inicializar DataTables después de cargar los datos
-                    // La inicialización se hará en la función cargarDatosDashboard()
-                    
-                    
-                    // Inicializar FullCalendar
-                    if (typeof FullCalendar !== 'undefined') {
-                        const calendarEl = document.getElementById('calendario');
-                        if (calendarEl) {
-                            const calendar = new FullCalendar.Calendar(calendarEl, {
-                                initialView: 'dayGridMonth',
-                                locale: 'es',
-                                headerToolbar: {
-                                    left: 'prev,next today',
-                                    center: 'title',
-                                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                                },
-                                events: [
-                                    // Eventos de ejemplo
-                                    {
-                                        title: 'Matemáticas',
-                                        daysOfWeek: ['1', '3', '5'],
-                                        startTime: '08:00',
-                                        endTime: '10:00',
-                                        color: '#4e73df'
-                                    },
-                                    {
-                                        title: 'Física',
-                                        daysOfWeek: ['2', '4'],
-                                        startTime: '10:00',
-                                        endTime: '12:00',
-                                        color: '#1cc88a'
-                                    },
-                                    {
-                                        title: 'Programación',
-                                        daysOfWeek: ['1', '3', '5'],
-                                        startTime: '14:00',
-                                        endTime: '16:00',
-                                        color: '#f6c23e'
-                                    }
-                                ]
-                            });
-                            calendar.render();
-                        }
-                    }
-                    
-                    // Cargar datos del dashboard
-                    cargarDatosDashboard();
-                    
-                    // Inicializar pestañas de Bootstrap
-                    const triggerTabList = [].slice.call(document.querySelectorAll('a[data-bs-toggle="tab"]'));
-                    triggerTabList.forEach(triggerEl => {
-                        const tabTrigger = new bootstrap.Tab(triggerEl);
-                        triggerEl.addEventListener('click', event => {
-                            event.preventDefault();
-                            tabTrigger.show();
-                        });
-                    });
-                    
-                    // Toggle Sidebar en móviles
-                    const sidebarToggle = document.getElementById('sidebarToggle');
-                    const sidebar = document.querySelector('.sidebar');
-                    
-                    if (sidebarToggle && sidebar) {
-                        sidebarToggle.addEventListener('click', function() {
-                            sidebar.classList.toggle('d-none');
-                        });
-                    }
-                    
-                } catch (error) {
-                    console.error('Error al inicializar componentes:', error);
-                }
-                
+        // Configuración de toastr
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": false,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        // Función para cerrar sesión
+        function cerrarSesion() {
+            if (window.auth && typeof window.auth.logout === 'function') {
+                window.auth.logout();
             } else {
-                console.error('Error: No se pudo cargar el módulo de autenticación');
+                // Redirigir al login si no se puede cerrar sesión correctamente
                 window.location.href = '/login';
-            }
-        });
-        
-        // Función para cargar los datos del dashboard
-        async function cargarDatosDashboard() {
-            try {
-                // Aquí irían las llamadas a la API para obtener los datos
-                // Por ahora usamos datos de ejemplo
-                document.getElementById('promedioGeneral').textContent = '8.7';
-                document.getElementById('cursosInscritos').textContent = '5';
-                document.getElementById('tareasPendientes').textContent = '3';
-                document.getElementById('porcentajeAsistencia').textContent = '92%';
-                document.getElementById('progresoSemestre').textContent = '40%';
-                
-                // Actualizar tabla de próximas actividades
-                const actividades = [
-                    { actividad: 'Examen de Matemáticas', curso: 'Matemáticas IV', fecha: '2023-06-25', estado: 'Pendiente' },
-                    { actividad: 'Entrega de Proyecto', curso: 'Programación Web', fecha: '2023-06-28', estado: 'En progreso' },
-                    { actividad: 'Tarea de Física', curso: 'Física II', fecha: '2023-06-30', estado: 'Pendiente' },
-                    { actividad: 'Presentación', curso: 'Inglés Técnico', fecha: '2023-07-02', estado: 'Por empezar' }
-                ];
-                
-                // Destruir DataTable si ya existe
-                if ($.fn.DataTable.isDataTable('#proximasActividades')) {
-                    $('#proximasActividades').DataTable().destroy();
-                }
-                
-                const tbody = document.querySelector('#proximasActividades tbody');
-                if (tbody) {
-                    tbody.innerHTML = actividades.map(act => `
-                        <tr>
-                            <td>${act.actividad}</td>
-                            <td>${act.curso}</td>
-                            <td>${act.fecha}</td>
-                            <td><span class="badge bg-${getBadgeClass(act.estado)}">${act.estado}</span></td>
-                        </tr>
-                    `).join('');
-                    
-                    // Inicializar DataTable después de cargar los datos
-                    if ($.fn.DataTable) {
-                        $('#proximasActividades').DataTable({
-                            "language": {
-                                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
-                            },
-                            "order": [[2, "asc"]],
-                            "responsive": true,
-                            "autoWidth": false
-                        });
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error al cargar los datos del dashboard:', error);
-            }
-        }
-        
-        // Función auxiliar para determinar la clase del badge según el estado
-        function getBadgeClass(estado) {
-            switch(estado.toLowerCase()) {
-                case 'pendiente': return 'warning';
-                case 'en progreso': return 'info';
-                case 'por empezar': return 'secondary';
-                case 'completado': return 'success';
-                case 'atrasado': 
-                case 'reprobado':
-                    return 'danger';
-                case 'aprobado':
-                    return 'success';
-                case 'cursando':
-                    return 'primary';
-                default: return 'secondary';
             }
         }
 
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Verificando autenticación del estudiante...');
+            
+            try {
+                // Verificar si el módulo de autenticación está disponible
+                if (!window.auth) {
+                    console.error('El módulo de autenticación no está disponible');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Verificar si el usuario está autenticado y es estudiante
+                if (!window.auth.isAuthenticated() || !window.auth.hasRole('estudiante')) {
+                    console.log('Usuario no autenticado o sin permisos de estudiante, redirigiendo...');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Obtener datos del usuario
+                const userData = window.auth.getCurrentUser();
+                if (userData) {
+                    console.log('Datos del usuario:', userData);
+                    
+                    // Actualizar la interfaz con los datos del usuario
+                    const nombreUsuario = document.getElementById('nombreEstudiante');
+                    const avatarUsuario = document.getElementById('estudianteAvatar');
+                    
+                    // Actualizar elementos de nombre de usuario
+                    if (nombreUsuario) {
+                        nombreUsuario.textContent = userData.name || 'Estudiante';
+                    }
+                    
+                    // Actualizar avatar
+                    if (avatarUsuario) {
+                        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'Estudiante')}&background=4e73df&color=fff`;
+                        avatarUsuario.src = avatarUrl;
+                        avatarUsuario.alt = userData.name || 'Estudiante';
+                    }
+                    
+                    // Configurar eventos de cierre de sesión
+                    document.querySelectorAll('[id^="btnCerrarSesion"]').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            cerrarSesion();
+                        });
+                    });
+                    
+                    // Inicializar la aplicación del estudiante
+                    console.log('Inicializando aplicación...');
+                    if (typeof inicializarAplicacion === 'function') {
+                        try {
+                            inicializarAplicacion();
+                            console.log('Aplicación inicializada correctamente');
+                        } catch (error) {
+                            console.error('Error al inicializar la aplicación:', error);
+                            toastr.error('Error al cargar la aplicación');
+                        }
+                    } else {
+                        console.error('La función inicializarAplicacion no está definida');
+                        toastr.error('Error al cargar la aplicación: función de inicialización no encontrada');
+                    }
+                } else {
+                    console.error('No se pudieron obtener los datos del usuario');
+                    window.location.href = '/login';
+                }
+                
+                console.log('Panel de estudiante cargado correctamente');
+                
+            } catch (error) {
+                console.error('Error al cargar el panel de estudiante:', error);
+                window.location.href = '/login';
+            }
+        });
+    </script>
+
+    <script>
         // Datos de ejemplo para las calificaciones
-        const datosCalificaciones = {
+        window.datosCalificaciones = {
             actual: [
                 {
                     id: 1,
@@ -828,100 +784,81 @@
             todos: []
         };
 
-        // Inicializar la sección de calificaciones
-        function inicializarCalificaciones() {
-            // Mostrar indicador de carga
-            const contenedor = document.querySelector('#calificaciones .tab-pane');
-            if (contenedor) {
-                contenedor.innerHTML = `
-                    <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
-                            
-                            if (materias.length === 0) {
-                                dropdownMenu.innerHTML = '<a class="dropdown-item" href="#">No hay materias disponibles</a>';
-                                return;
-                            }
-                            
-                            // Agregar opción para mostrar todas
-                            const todasItem = document.createElement('a');
-                            todasItem.className = 'dropdown-item active';
-                            todasItem.href = '#';
-                            todasItem.textContent = 'Todas las materias';
-                            todasItem.dataset.materia = 'todas';
-                            dropdownMenu.appendChild(todasItem);
-                            
-                            // Agregar cada materia como opción
-                            materias.forEach(materia => {
-                                const item = document.createElement('a');
-                                item.className = 'dropdown-item';
-                                item.href = '#';
-                                item.textContent = materia;
-                                item.dataset.materia = materia;
-                                dropdownMenu.appendChild(item);
-                            });
-                            
-                            // Manejar clic en una materia
-                            dropdownMenu.querySelectorAll('.dropdown-item').forEach(item => {
-                                item.addEventListener('click', function(e) {
-                                    e.preventDefault();
-                                    const materia = this.dataset.materia;
-                                    filtrarPorMateria(materia);
-                                    this.classList.add('active');
-                                    this.parentNode.querySelectorAll('.dropdown-item').forEach(i => {
-                                        if (i !== this) i.classList.remove('active');
-                                    });
-                                    dropdownFiltro.querySelector('.dropdown-toggle').textContent = this.textContent;
-                                });
-                            });
-                        }
-                    });
+        /**
+         * Determina la clase CSS para un badge según el estado de la materia
+         * @param {string} estado - Estado de la materia (aprobado, reprobado, etc.)
+         * @returns {string} Clase CSS para el badge
+         */
+        function getBadgeClass(estado) {
+            if (!estado) return 'bg-secondary';
+            
+            const estadoLower = estado.toLowerCase();
+            const estados = {
+                'aprobado': 'bg-success',
+                'reprobado': 'bg-danger',
+                'en curso': 'bg-primary',
+                'pendiente': 'bg-warning',
+                'cursada': 'bg-info',
+                'regular': 'bg-primary',
+                'libre': 'bg-danger',
+                'promocion': 'bg-success',
+                'final pendiente': 'bg-warning'
+            };
+            
+            return estados[estadoLower] || 'bg-secondary';
+        }
+
+        // Función para cargar los datos del dashboard
+        async function cargarDatosDashboard() {
+            try {
+                // Aquí irían las llamadas a la API para obtener los datos
+                // Por ahora usamos datos de ejemplo
+                document.getElementById('promedioGeneral').textContent = '8.7';
+                document.getElementById('cursosInscritos').textContent = '5';
+                document.getElementById('tareasPendientes').textContent = '3';
+                document.getElementById('porcentajeAsistencia').textContent = '92%';
+                document.getElementById('progresoSemestre').textContent = '40%';
+                
+                // Actualizar tabla de próximas actividades
+                const actividades = [
+                    { actividad: 'Examen de Matemáticas', curso: 'Matemáticas IV', fecha: '2023-06-25', estado: 'Pendiente' },
+                    { actividad: 'Entrega de Proyecto', curso: 'Programación Web', fecha: '2023-06-28', estado: 'En progreso' },
+                    { actividad: 'Tarea de Física', curso: 'Física II', fecha: '2023-06-30', estado: 'Pendiente' },
+                    { actividad: 'Presentación', curso: 'Inglés Técnico', fecha: '2023-07-02', estado: 'Por empezar' }
+                ];
+                
+                // Destruir DataTable si ya existe
+                if ($.fn.DataTable.isDataTable('#proximasActividades')) {
+                    $('#proximasActividades').DataTable().destroy();
                 }
                 
-                // Configurar eventos de los botones de acción
-                const botonesAccion = document.querySelectorAll('.btn-accion');
-                if (botonesAccion.length > 0) {
-                    botonesAccion.forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const accion = this.dataset.accion;
-                            switch(accion) {
-                                case 'descargar':
-                                    if (typeof descargarBoletin === 'function') {
-                                        descargarBoletin();
-                                    }
-                                    break;
-                                case 'imprimir':
-                                    window.print();
-                                    break;
-                                case 'compartir':
-                                    if (typeof compartirCalificaciones === 'function') {
-                                        compartirCalificaciones();
-                                    }
-                                    break;
-                                default:
-                                    console.log('Acción no reconocida:', accion);
-                            }
+                const tbody = document.querySelector('#proximasActividades tbody');
+                if (tbody) {
+                    tbody.innerHTML = actividades.map(act => `
+                        <tr>
+                            <td>${act.actividad}</td>
+                            <td>${act.curso}</td>
+                            <td>${act.fecha}</td>
+                            <td><span class="badge bg-${getBadgeClass(act.estado)}">${act.estado}</span></td>
+                        </tr>
+                    `).join('');
+                    
+                    // Inicializar DataTable después de cargar los datos
+                    if ($.fn.DataTable) {
+                        $('#proximasActividades').DataTable({
+                            "language": {
+                                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                            },
+                            "order": [[2, "asc"], [0, "asc"]],
+                            "responsive": true,
+                            "autoWidth": false
                         });
-                    });
+                    }
                 }
                 
-                // Inicializar tooltips
-                const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-                if (tooltipTriggerList.length > 0) {
-                    tooltipTriggerList.forEach(tooltipEl => {
-                        new bootstrap.Tooltip(tooltipEl);
-                    });
-                }
-                
-                // Inicializar con el período actual
-                if (typeof actualizarDatosPeriodo === 'function') {
-                    actualizarDatosPeriodo('actual');
-                }
-                
-                // Mostrar notificación de bienvenida
-                if (typeof mostrarNotificacion === 'function') {
-                    mostrarNotificacion('¡Bienvenido a tu panel de calificaciones!', 'success');
-                }
-                
-            }, 1000); // Simular tiempo de carga
+            } catch (error) {
+                console.error('Error al cargar los datos del dashboard:', error);
+            }
         }
         
         // Actualizar el resumen de calificaciones
@@ -930,7 +867,7 @@
             const promedios = calificaciones.map(c => c.promedio).filter(p => p !== null);
             
             if (promedios.length > 0) {
-                const sumaPromedios = promedios.reduce((a, b) => a + b, 0);
+                const sumaPromedios = promedios.reduce(function(a, b) { return a + b; }, 0);
                 const promedioGeneral = (sumaPromedios / promedios.length).toFixed(2);
                 const promedioElement = document.getElementById('promedioGeneralNotas');
                 if (promedioElement) {
@@ -938,10 +875,12 @@
                 }
                 
                 // Actualizar mejor y peor calificación
-                const mejor = calificaciones.reduce((prev, current) => 
-                    (prev.promedio > current.promedio) ? prev : current);
-                const peor = calificaciones.reduce((prev, current) => 
-                    (prev.promedio < current.promedio) ? prev : current);
+                const mejor = calificaciones.reduce(function(prev, current) {
+                    return (prev.promedio > current.promedio) ? prev : current;
+                });
+                const peor = calificaciones.reduce(function(prev, current) {
+                    return (prev.promedio < current.promedio) ? prev : current;
+                });
                 
                 document.getElementById('mejorCalificacion').textContent = mejor.promedio.toFixed(1);
                 document.getElementById('mejorMateria').textContent = mejor.asignatura;
@@ -950,15 +889,23 @@
                 
                 // Actualizar estado académico
                 const estadoAcademico = document.getElementById('estadoAcademico');
+                const promedioNecesario = document.getElementById('promedioNecesario');
+                
                 if (promedioGeneral >= 8.0) {
                     estadoAcademico.innerHTML = '<span class="badge bg-success">Excelente</span>';
-                    document.getElementById('promedioNecesario').textContent = '¡Sigue así!';
+                    if (promedioNecesario) {
+                        promedioNecesario.textContent = '¡Sigue así!';
+                    }
                 } else if (promedioGeneral >= 7.0) {
                     estadoAcademico.innerHTML = '<span class="badge bg-primary">Bueno</span>';
-                    document.getElementById('promedioNecesario').textContent = `Necesitas ${(8.0 - promedioGeneral).toFixed(2)} para alcanzar excelencia`;
+                    if (promedioNecesario) {
+                        promedioNecesario.textContent = 'Necesitas ' + (8.0 - parseFloat(promedioGeneral)).toFixed(2) + ' para alcanzar excelencia';
+                    }
                 } else {
                     estadoAcademico.innerHTML = '<span class="badge bg-warning">En riesgo</span>';
-                    document.getElementById('promedioNecesario').textContent = `Necesitas ${(7.0 - promedioGeneral).toFixed(2)} para aprobar`;
+                    if (promedioNecesario) {
+                        promedioNecesario.textContent = 'Necesitas ' + (7.0 - parseFloat(promedioGeneral)).toFixed(2) + ' para aprobar';
+                    }
                 }
             }
         }
@@ -976,11 +923,17 @@
             
             // Limpiar el contenido existente
             const tbody = table.find('tbody');
-            tbody.empty();
+            if (tbody && tbody.length > 0) {
+                tbody.empty();
+            }
             
             // Obtener los datos de calificaciones del período actual
-            const periodoActual = $('.btn-periodo.active').data('periodo') || 'actual';
-            const calificaciones = datosCalificaciones[periodoActual] || [];
+            let periodoActual = 'actual';
+            const btnPeriodoActivo = document.querySelector('.btn-periodo.active');
+            if (btnPeriodoActivo) {
+                periodoActual = btnPeriodoActivo.getAttribute('data-periodo') || 'actual';
+            }
+            const calificaciones = (window.datosCalificaciones && window.datosCalificaciones[periodoActual]) || [];
             
             // Crear filas de la tabla manualmente
             if (calificaciones.length > 0) {
@@ -1009,23 +962,40 @@
             
             // Inicializar DataTable con configuración básica
             const dataTable = table.DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+                'language': {
+                    'url': '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
                 },
-                order: [[5, 'desc']],
-                responsive: true,
-                autoWidth: false,
-                columnDefs: [
-                    { orderable: false, targets: [7] } // Deshabilitar ordenación en la columna de acciones
+                'order': [[5, 'desc']],
+                'responsive': true,
+                'autoWidth': false,
+                'columnDefs': [
+                    { 
+                        'orderable': false, 
+                        'targets': [7] // Deshabilitar ordenación en la columna de acciones
+                    }
                 ]
             });
             
             // Configurar evento para ver detalles
             dataTable.on('click', '.ver-detalle', function() {
-                const id = $(this).data('id');
-                const materia = datosCalificaciones.actual.find(m => m.id === id);
-                if (materia) {
-                    mostrarDetalleMateria(materia);
+                try {
+                    var id = $(this).data('id');
+                    if (window.datosCalificaciones && Array.isArray(window.datosCalificaciones.actual)) {
+                        var materia = null;
+                        for (var i = 0; i < window.datosCalificaciones.actual.length; i++) {
+                            var m = window.datosCalificaciones.actual[i];
+                            if (m && m.id === id) {
+                                materia = m;
+                                break;
+                            }
+                        }
+                        if (materia) {
+                            mostrarDetalleMateria(materia);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al mostrar detalles:', error);
+                    mostrarNotificacion('Error al cargar los detalles de la materia', 'danger');
                 }
             });
             
@@ -1034,74 +1004,155 @@
         
         // Mostrar el modal con los detalles de la materia
         function mostrarDetalleMateria(materia) {
-            // Actualizar información básica
-            document.getElementById('modalMateriaTitulo').textContent = materia.asignatura;
-            document.getElementById('modalMateriaProfesor').textContent = `Profesor: ${materia.profesor}`;
-            document.getElementById('modalPromedioActual').textContent = materia.promedio.toFixed(2);
-            
-            // Actualizar barra de progreso
-            const porcentaje = Math.min(100, (materia.promedio / 10) * 100);
-            document.getElementById('modalBarraProgreso').style.width = `${porcentaje}%`;
-            
-            // Actualizar estado
-            const estadoElement = document.getElementById('modalEstadoMateria');
-            estadoElement.className = 'badge ' + getBadgeClass(materia.estado.toLowerCase());
-            estadoElement.textContent = materia.estado;
-            
-            // Calcular nota necesaria para aprobar (si aplica)
-            if (materia.promedio < 7.0 && materia.estado !== 'Aprobado') {
-                const notaNecesaria = ((7.0 * 10) - (materia.promedio * 7)) / 3;
-                document.getElementById('modalNotaNecesaria').textContent = 
-                    `Necesitas al menos ${notaNecesaria.toFixed(2)} en el examen final para aprobar`;
-            } else {
-                document.getElementById('modalNotaNecesaria').textContent = '';
+            try {
+                // Actualizar información básica
+                const tituloElement = document.getElementById('modalMateriaTitulo');
+                const profesorElement = document.getElementById('modalMateriaProfesor');
+                const promedioElement = document.getElementById('modalPromedioActual');
+                
+                if (tituloElement) tituloElement.textContent = materia.asignatura || 'Sin nombre';
+                if (profesorElement) {
+                    profesorElement.textContent = 'Profesor: ' + (materia.profesor || 'No asignado');
+                }
+                if (promedioElement && materia.promedio !== undefined) {
+                    promedioElement.textContent = typeof materia.promedio === 'number' ? materia.promedio.toFixed(2) : 'N/A';
+                }
+                
+                // Actualizar barra de progreso
+                const barraProgreso = document.getElementById('modalBarraProgreso');
+                if (barraProgreso && materia.promedio !== undefined) {
+                    const porcentaje = Math.min(100, Math.max(0, (materia.promedio / 10) * 100));
+                    barraProgreso.style.width = porcentaje + '%';
+                }
+                
+                // Actualizar estado
+                const estadoElement = document.getElementById('modalEstadoMateria');
+                if (estadoElement && materia.estado) {
+                    const estado = String(materia.estado).toLowerCase();
+                    estadoElement.className = 'badge ' + getBadgeClass(estado);
+                    estadoElement.textContent = materia.estado;
+                }
+                
+                // Calcular nota necesaria para aprobar (si aplica)
+                const notaNecesariaElement = document.getElementById('modalNotaNecesaria');
+                if (notaNecesariaElement && materia && typeof materia.promedio === 'number' && materia.estado) {
+                    const estado = String(materia.estado).toLowerCase();
+                    if (materia.promedio < 7.0 && estado !== 'aprobado') {
+                        const notaNecesaria = ((7.0 * 10) - (materia.promedio * 7)) / 3;
+                        notaNecesariaElement.textContent = 
+                            'Necesitas al menos ' + notaNecesaria.toFixed(2) + ' en el examen final para aprobar';
+                    } else {
+                        notaNecesariaElement.textContent = '';
+                    }
+                }
+                
+                // Actualizar tabla de evaluaciones
+                const tbody = document.getElementById('modalDetalleEvaluaciones');
+                if (tbody) {
+                    if (Array.isArray(materia.evaluaciones) && materia.evaluaciones.length > 0) {
+                        tbody.innerHTML = materia.evaluaciones.map(evaluacion => {
+                            const calificacion = (evaluacion.calificacion !== null && evaluacion.calificacion !== undefined) 
+                                ? evaluacion.calificacion.toFixed(1) 
+                                : '<span class="text-muted">Pendiente</span>';
+                            const estado = (evaluacion.estado && typeof evaluacion.estado === 'string') 
+                                ? evaluacion.estado.toLowerCase() 
+                                : '';
+                            
+                            return `
+                                <tr>
+                                    <td>${evaluacion.nombre || '-'}</td>
+                                    <td>${evaluacion.fecha || '-'}</td>
+                                    <td class="text-center">${calificacion}</td>
+                                    <td class="text-center">${evaluacion.ponderacion || '0'}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-${getBadgeClass(estado)}">
+                                            ${evaluacion.estado || '-'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center">No hay evaluaciones disponibles</td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+                // Mostrar el modal
+                const modalElement = document.getElementById('modalDetalleCalificacion');
+                if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            } catch (error) {
+                console.error('Error al mostrar detalles de la materia:', error);
+                mostrarNotificacion('Error al cargar los detalles de la materia', 'danger');
             }
-            
-            // Actualizar tabla de evaluaciones
-            const tbody = document.getElementById('modalDetalleEvaluaciones');
-            tbody.innerHTML = materia.evaluaciones.map(evaluacion => `
-                <tr>
-                    <td>${evaluacion.nombre}</td>
-                    <td>${evaluacion.fecha}</td>
-                    <td class="text-center">
-                        ${evaluacion.calificacion !== null ? evaluacion.calificacion : '<span class="text-muted">Pendiente</span>'}
-                    </td>
-                    <td class="text-center">${evaluacion.ponderacion}</td>
-                    <td class="text-center">
-                        <span class="badge bg-${getBadgeClass(evaluacion.estado.toLowerCase())}">
-                            ${evaluacion.estado}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
-            
-            // Mostrar el modal
-            const modal = new bootstrap.Modal(document.getElementById('modalDetalleCalificacion'));
-            modal.show();
         }
         
         // Inicializar el gráfico de rendimiento
         function inicializarGraficoRendimiento() {
-            const canvas = document.getElementById('graficoRendimiento');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            const calificaciones = datosCalificaciones.actual || [];
-            
-            // Verificar si hay datos para mostrar
-            if (calificaciones.length === 0) {
-                canvas.parentElement.innerHTML = '<p class="text-muted text-center my-4">No hay datos disponibles para mostrar el gráfico.</p>';
-                return;
-            }
-            
-            // Preparar datos para el gráfico
-            const materias = calificaciones.map(m => m.asignatura);
-            const promedios = calificaciones.map(m => m.promedio);
-            const colores = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
-            
-            // Crear instancia del gráfico
+            let canvas;
             try {
-                new Chart(ctx, {
+                canvas = document.getElementById('graficoRendimiento');
+                if (!canvas) {
+                    console.error('No se encontró el elemento canvas para el gráfico');
+                    return;
+                }
+                
+                // Verificar si Chart está disponible
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js no está cargado correctamente');
+                    if (canvas.parentElement) {
+                        canvas.parentElement.innerHTML = '<p class="text-danger text-center my-4">Error: No se pudo cargar la biblioteca de gráficos.</p>';
+                    }
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('No se pudo obtener el contexto 2D del canvas');
+                    return;
+                }
+                
+                // Obtener datos actuales o usar array vacío
+                const calificaciones = window.datosCalificaciones && Array.isArray(window.datosCalificaciones.actual) ? 
+                    window.datosCalificaciones.actual : [];
+                
+                // Verificar si hay datos para mostrar
+                if (calificaciones.length === 0) {
+                    if (canvas.parentElement) {
+                        canvas.parentElement.innerHTML = '<p class="text-muted text-center my-4">No hay datos disponibles para mostrar el gráfico.</p>';
+                    }
+                    return;
+                }
+                
+                // Preparar datos para el gráfico con validación
+                const materias = calificaciones
+                    .filter(m => m && typeof m === 'object' && m.asignatura)
+                    .map(m => m.asignatura.trim() || 'Sin nombre');
+                    
+                const promedios = calificaciones.map(m => {
+                    const num = parseFloat(m && m.promedio);
+                    return isNaN(num) ? 0 : Math.min(Math.max(num, 0), 10);
+                });
+                
+                const colores = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+                
+                // Destruir instancia anterior si existe
+                if (window.rendimientoChart && typeof window.rendimientoChart.destroy === 'function') {
+                    try {
+                        window.rendimientoChart.destroy();
+                    } catch (e) {
+                        console.error('Error al destruir el gráfico anterior:', e);
+                    }
+                }
+                
+                // Crear instancia del gráfico
+                window.rendimientoChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: materias,
@@ -1117,21 +1168,9 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 10,
-                                title: {
-                                    display: true,
-                                    text: 'Calificación (0-10)'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Asignaturas'
-                                }
-                            }
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
                         },
                         plugins: {
                             legend: {
@@ -1140,13 +1179,63 @@
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `Promedio: ${context.raw.toFixed(2)}`;
+                                        return `Promedio: ${context.raw.toFixed(1)}`;
                                     }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                title: {
+                                    display: true,
+                                    text: 'Calificación (0-10)',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        return value.toFixed(1);
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Asignaturas',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    autoSkip: false,
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    callback: function(value) {
+                                        // Asegurar que el texto no sea demasiado largo
+                                        const maxLength = 15;
+                                        if (value.length > maxLength) {
+                                            return value.substring(0, maxLength) + '...';
+                                        }
+                                        return value;
+                                    }
+                                },
+                                grid: {
+                                    display: false
                                 }
                             }
                         }
                     }
                 });
+                
+                console.log('Gráfico de rendimiento inicializado correctamente');
+                
             } catch (error) {
                 console.error('Error al inicializar el gráfico:', error);
                 if (canvas && canvas.parentElement) {
@@ -1161,122 +1250,503 @@
         
         // Sistema de notificaciones
         function mostrarNotificacion(mensaje, tipo = 'info') {
-            const notificacion = document.createElement('div');
-            notificacion.className = `alert alert-${tipo} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
-            notificacion.role = 'alert';
-            notificacion.style.zIndex = '1100';
-            notificacion.innerHTML = `
-                ${mensaje}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-            `;
-            document.body.appendChild(notificacion);
-            
-            // Eliminar la notificación después de 5 segundos
-            setTimeout(() => {
-                notificacion.remove();
-            }, 5000);
-        }
-        
-        // Filtrar la tabla por materia
-        function filtrarPorMateria(materia) {
-            const tabla = $('#tablaCalificaciones').DataTable();
-            if (materia === 'todas') {
-                tabla.search('').columns().search('').draw();
-            } else {
-                tabla.column(0).search(materia, true, false).draw();
-            }
-            
-            // Mostrar notificación
-            const mensaje = materia === 'todas' 
-                ? 'Mostrando todas las materias' 
-                : `Filtrando por materia: ${materia}`;
+            try {
+                // Verificar si toast está disponible
+                if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
+                    console.warn('Toast de Bootstrap no está disponible');
+                    return;
+                }
                 
-            mostrarNotificacion(mensaje, 'info');
-        }
-        
-        // Descargar boletín de calificaciones
-        function descargarBoletin() {
-            // Simular descarga
-            mostrarNotificacion('Preparando descarga del boletín...', 'info');
-            
-            // Aquí iría la lógica real de descarga
-            setTimeout(() => {
-                mostrarNotificacion('Boletín descargado correctamente', 'success');
+                // Crear el contenedor del toast si no existe
+                let toastContainer = document.getElementById('toastContainer');
+                if (!toastContainer) {
+                    toastContainer = document.createElement('div');
+                    toastContainer.id = 'toastContainer';
+                    toastContainer.style.position = 'fixed';
+                    toastContainer.style.top = '20px';
+                    toastContainer.style.right = '20px';
+                    toastContainer.style.zIndex = '1100';
+                    document.body.appendChild(toastContainer);
+                }
                 
-                // Simular descarga
-                const enlace = document.createElement('a');
-                enlace.href = '#';
-                enlace.download = 'boletin_calificaciones.pdf';
-                enlace.click();
-            }, 1500);
-        }
-        
-        // Compartir calificaciones
-        function compartirCalificaciones() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Mis Calificaciones',
-                    text: 'Revisa mis calificaciones del período actual',
-                    url: window.location.href
-                })
-                .then(() => mostrarNotificacion('¡Compartido exitosamente!', 'success'))
-                .catch(error => mostrarNotificacion('Error al compartir: ' + error, 'danger'));
-            } else {
-                // Fallback para navegadores que no soportan la API de Web Share
-                mostrarNotificacion('La función de compartir no está disponible en tu navegador', 'warning');
+                // Crear el toast
+                const toastId = 'toast-' + Date.now();
+                const toastElement = document.createElement('div');
+                toastElement.id = toastId;
+                toastElement.className = 'toast align-items-center text-white bg-' + tipo + ' border-0';
+                toastElement.role = 'alert';
+                toastElement.setAttribute('aria-live', 'assertive');
+                toastElement.setAttribute('aria-atomic', 'true');
+                toastElement.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${mensaje}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                    </div>
+                `;
                 
-                // Copiar al portapapeles como alternativa
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(() => {
-                    mostrarNotificacion('¡Enlace copiado al portapapeles!', 'success');
+                toastContainer.appendChild(toastElement);
+                
+                // Inicializar y mostrar el toast
+                const toast = new bootstrap.Toast(toastElement, {
+                    animation: true,
+                    autohide: true,
+                    delay: 5000
                 });
+                toast.show();
+                
+                // Eliminar el toast después de que se oculte
+                toastElement.addEventListener('hidden.bs.toast', function() {
+                    toastElement.remove();
+                });
+                
+            } catch (error) {
+                console.error('Error al mostrar notificación:', error);
+            }
+        }
+
+        /**
+         * Filtra la tabla de calificaciones por materia
+         * @param {string} materia - Nombre de la materia a filtrar
+         */
+        function filtrarPorMateria(materia) {
+            try {
+                const tabla = $('#tablaCalificaciones').DataTable();
+                if (!tabla) {
+                    console.error('No se pudo encontrar la tabla de calificaciones');
+                    return;
+                }
+                
+                if (materia === 'todas') {
+                    tabla.search('').columns().search('').draw();
+                    mostrarNotificacion('Mostrando todas las materias', 'info');
+                } else {
+                    tabla.column(0).search(materia, true, false).draw();
+                    mostrarNotificacion(`Filtrando por materia: ${materia}`, 'info');
+                }
+            } catch (error) {
+                console.error('Error al filtrar por materia:', error);
+                mostrarNotificacion('Error al filtrar las calificaciones', 'danger');
             }
         }
         
-        // Actualizar datos según el período seleccionado
-        function actualizarDatosPeriodo(periodo) {
-            // Mostrar indicador de carga
-            const tabla = $('#tablaCalificaciones');
-            const tbody = tabla.find('tbody');
-            tbody.html('<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>');
-            
-            // Simular carga asíncrona
-            setTimeout(() => {
-                // Actualizar la tabla con los datos del período seleccionado
-                if (datosCalificaciones[periodo]) {
-                    const dataTable = $('#tablaCalificaciones').DataTable();
-                    dataTable.clear().rows.add(datosCalificaciones[periodo]).draw();
-                }
+        /**
+         * Descarga el boletín de calificaciones
+         */
+        function descargarBoletin() {
+            try {
+                mostrarNotificacion('Preparando descarga del boletín...', 'info');
                 
-                // Actualizar el gráfico de rendimiento
-                if (typeof inicializarGraficoRendimiento === 'function') {
-                    inicializarGraficoRendimiento();
-                }
+                // Simular tiempo de generación del boletín
+                setTimeout(() => {
+                    // Crear un enlace temporal para la descarga
+                    const enlace = document.createElement('a');
+                    enlace.href = '#';
+                    enlace.download = 'boletin_calificaciones.pdf';
+                    
+                    // Simular clic para iniciar la descarga
+                    document.body.appendChild(enlace);
+                    enlace.click();
+                    document.body.removeChild(enlace);
+                    
+                    mostrarNotificacion('Boletín descargado correctamente', 'success');
+                }, 1500);
                 
-                // Actualizar el resumen de calificaciones
-                if (typeof actualizarResumenCalificaciones === 'function') {
-                    actualizarResumenCalificaciones();
-                }
-                
-                // Mostrar notificación
-                mostrarNotificacion(`Datos del período ${periodo} cargados correctamente`, 'success');
-            }, 500);
+            } catch (error) {
+                console.error('Error al descargar el boletín:', error);
+                mostrarNotificacion('Error al descargar el boletín', 'danger');
+            }
         }
         
-        // Llamar a la inicialización de calificaciones cuando se cargue la pestaña
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabCalificaciones = document.querySelector('a[href="#calificaciones"]');
-            if (tabCalificaciones) {
-                tabCalificaciones.addEventListener('shown.bs.tab', function() {
-                    if (!window.calificacionesInicializadas) {
-                        inicializarCalificaciones();
-                        window.calificacionesInicializadas = true;
+        /**
+         * Comparte las calificaciones a través de la API Web Share
+         */
+        function compartirCalificaciones() {
+            try {
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Mis Calificaciones',
+                        text: 'Revisa mis calificaciones del período actual',
+                        url: window.location.href
+                    })
+                    .then(() => mostrarNotificacion('¡Compartido exitosamente!', 'success'))
+                    .catch(error => {
+                        if (error.name !== 'AbortError') {
+                            mostrarNotificacion('Error al compartir: ' + error.message, 'danger');
+                        }
+                    });
+                } else {
+                    // Fallback para navegadores que no soportan la API de Web Share
+                    navigator.clipboard.writeText(window.location.href)
+                        .then(() => mostrarNotificacion('Enlace copiado al portapapeles', 'success'))
+                        .catch(() => mostrarNotificacion('No se pudo copiar el enlace', 'warning'));
+                }
+            } catch (error) {
+                console.error('Error al compartir calificaciones:', error);
+                mostrarNotificacion('Error al compartir las calificaciones', 'danger');
+            }
+        }
+        
+        /**
+         * Actualiza los datos mostrados según el período seleccionado
+         * @param {string} periodo - Período a mostrar (actual, anterior, etc.)
+         */
+        function actualizarDatosPeriodo(periodo) {
+            try {
+                // Mostrar indicador de carga
+                const tabla = $('#tablaCalificaciones');
+                const tbody = tabla.find('tbody');
+                tbody.html('<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>');
+                
+                // Simular carga asíncrona
+                setTimeout(() => {
+                    // Actualizar la tabla con los datos del período seleccionado
+                    if (datosCalificaciones[periodo]) {
+                        const dataTable = tabla.DataTable();
+                        dataTable.clear().rows.add(datosCalificaciones[periodo]).draw();
+                    }
+                    
+                    // Actualizar el gráfico de rendimiento
+                    if (typeof inicializarGraficoRendimiento === 'function') {
+                        inicializarGraficoRendimiento();
+                    }
+                    
+                    // Actualizar el resumen de calificaciones
+                    if (typeof actualizarResumenCalificaciones === 'function') {
+                        actualizarResumenCalificaciones();
+                    }
+                    
+                    mostrarNotificacion(`Datos del período ${periodo} cargados correctamente`, 'success');
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error al actualizar datos del período:', error);
+                mostrarNotificacion('Error al cargar los datos del período', 'danger');
+            }
+        }
+        
+        /**
+         * Cierra la sesión del usuario y redirige al login
+         */
+        function cerrarSesion() {
+            try {
+                if (window.auth && typeof window.auth.logout === 'function') {
+                    // Usar el módulo de autenticación para cerrar sesión
+                    window.auth.logout();
+                } else {
+                    // Fallback en caso de que el módulo no esté disponible
+                    console.warn('Módulo de autenticación no disponible, usando método alternativo');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                // Forzar redirección en caso de error
+                window.location.href = '/login';
+            }
+        }
+
+        /**
+         * Inicializa la aplicación del panel de estudiante
+         */
+        function inicializarAplicacion() {
+            console.log('Inicializando aplicación del panel de estudiante...');
+            
+            try {
+                // Verificar si el módulo de autenticación está disponible
+                if (!window.auth) {
+                    console.error('El módulo de autenticación no está disponible');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                // Verificar autenticación
+                if (!window.auth.isAuthenticated()) {
+                    console.log('Usuario no autenticado, redirigiendo...');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                // Verificar rol de estudiante
+                if (!window.auth.hasRole('estudiante')) {
+                    console.log('Usuario no tiene permisos de estudiante, redirigiendo...');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                // Obtener datos del usuario autenticado
+                const user = window.auth.getUserData();
+                console.log('Usuario autenticado:', user);
+                
+                // Actualizar la interfaz de usuario con los datos del usuario
+                actualizarInterfazUsuario(user);
+                
+                // Inicializar componentes
+                inicializarComponentes();
+                
+                // Configurar manejadores de eventos
+                configurarEventos();
+                
+                console.log('Panel de estudiante inicializado correctamente');
+                
+            } catch (error) {
+                console.error('Error al inicializar la aplicación:', error);
+                mostrarNotificacion('Error al cargar la aplicación', 'danger');
+                // Redirigir al login en caso de error crítico
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+        }
+        
+        /**
+         * Actualiza la interfaz de usuario con los datos del usuario
+         * @param {Object} user - Datos del usuario
+         */
+        function actualizarInterfazUsuario(user) {
+            try {
+                // Actualizar nombre en la barra lateral
+                const nombreUsuario = user.name || 'Estudiante';
+                document.getElementById('nombreEstudiante').textContent = nombreUsuario;
+                document.getElementById('nombreUsuarioNav').textContent = nombreUsuario;
+                
+                // Actualizar avatar con iniciales
+                const avatar = document.getElementById('estudianteAvatar');
+                if (avatar) {
+                    const iniciales = nombreUsuario.split(' ')
+                        .map(parte => parte[0])
+                        .join('')
+                        .toUpperCase();
+                    avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(iniciales)}&background=4e73df&color=fff&size=80`;
+                }
+                
+                // Actualizar título de la página
+                document.title = `${nombreUsuario} - Panel del Estudiante`;
+                
+            } catch (error) {
+                console.error('Error al actualizar la interfaz de usuario:', error);
+                throw error; // Relanzar para manejarlo en el bloque catch principal
+            }
+        }
+        
+        /**
+         * Inicializa los componentes de la interfaz
+         */
+        function inicializarComponentes() {
+            try {
+                // Inicializar calendario
+                if (typeof inicializarCalendario === 'function') {
+                    inicializarCalendario();
+                } else {
+                    console.warn('La función inicializarCalendario no está definida');
+                }
+                
+                // Inicializar sección de calificaciones
+                if (typeof inicializarCalificaciones === 'function') {
+                    inicializarCalificaciones();
+                } else {
+                    console.warn('La función inicializarCalificaciones no está definida');
+                }
+                
+                // Inicializar tooltips
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(tooltipTriggerEl => {
+                    try {
+                        new bootstrap.Tooltip(tooltipTriggerEl);
+                    } catch (error) {
+                        console.error('Error al inicializar tooltip:', error);
                     }
                 });
+                
+                // Inicializar popovers
+                const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+                popoverTriggerList.forEach(popoverTriggerEl => {
+                    try {
+                        new bootstrap.Popover(popoverTriggerEl);
+                    } catch (error) {
+                        console.error('Error al inicializar popover:', error);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error al inicializar componentes:', error);
+                throw error; // Relanzar para manejarlo en el bloque catch principal
             }
-            
-            // Mostrar notificación de bienvenida
-            mostrarNotificacion('¡Bienvenido a tu panel de calificaciones!', 'success');
+        }
+        
+        /**
+         * Configura los manejadores de eventos
+         */
+        function configurarEventos() {
+            try {
+                // Configurar evento de cierre de sesión
+                const btnCerrarSesion = document.getElementById('btnCerrarSesion');
+                if (btnCerrarSesion) {
+                    btnCerrarSesion.addEventListener('click', cerrarSesion);
+                } else {
+                    console.warn('No se encontró el botón de cierre de sesión');
+                }
+                
+                // Configurar evento para el menú desplegable de usuario
+                const dropdownUsuario = document.querySelector('.dropdown-toggle');
+                if (dropdownUsuario) {
+                    dropdownUsuario.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const dropdownMenu = this.nextElementSibling;
+                        if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                            dropdownMenu.classList.toggle('show');
+                        }
+                    });
+                }
+                
+                // Cerrar menús desplegables al hacer clic fuera
+                document.addEventListener('click', function(e) {
+                    if (!e.target.matches('.dropdown-toggle')) {
+                        const dropdowns = document.querySelectorAll('.dropdown-menu');
+                        dropdowns.forEach(dropdown => {
+                            if (dropdown.classList.contains('show')) {
+                                dropdown.classList.remove('show');
+                            }
+                        });
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error al configurar eventos:', error);
+                throw error; // Relanzar para manejarlo en el bloque catch principal
+            }
+        }
+        
+        // Agregar contenedor de notificaciones si no existe
+        if (!document.getElementById('toastContainer')) {
+            const toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.style.position = 'fixed';
+            toastContainer.style.top = '20px';
+            toastContainer.style.right = '20px';
+            toastContainer.style.zIndex = '1100';
+            document.body.appendChild(toastContainer);
+        }
+        
+        /**
+         * Inicializa el calendario de horarios
+         */
+        function inicializarCalendario() {
+            try {
+                const calendarEl = document.getElementById('calendarioHorario');
+                if (!calendarEl) {
+                    console.warn('No se encontró el elemento del calendario');
+                    return;
+                }
+                
+                if (window.calendarioInicializado) {
+                    console.log('El calendario ya está inicializado');
+                    return;
+                }
+                
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'timeGridWeek',
+                    locale: 'es',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    slotMinTime: '07:00:00',
+                    slotMaxTime: '22:00:00',
+                    allDaySlot: false,
+                    events: [
+                        {
+                            title: 'Matemáticas',
+                            daysOfWeek: ['1', '3'],
+                            startTime: '08:00',
+                            endTime: '10:00',
+                            color: '#4e73df'
+                        },
+                        {
+                            title: 'Programación',
+                            daysOfWeek: ['1', '3', '5'],
+                            startTime: '14:00',
+                            endTime: '16:00',
+                            color: '#f6c23e'
+                        }
+                    ]
+                });
+                
+                calendar.render();
+                window.calendarioInicializado = true;
+                console.log('Calendario inicializado correctamente');
+            } catch (error) {
+                console.error('Error al inicializar el calendario:', error);
+                mostrarNotificacion('Error al cargar el calendario', 'danger');
+            }
+        }
+
+        /**
+         * Inicializa las pestañas de Bootstrap
+         */
+        function inicializarPestanas() {
+            try {
+                const triggerTabList = [].slice.call(document.querySelectorAll('a[data-bs-toggle="tab"]'));
+                if (!triggerTabList || triggerTabList.length === 0) {
+                    console.warn('No se encontraron pestañas para inicializar');
+                    return;
+                }
+                
+                triggerTabList.forEach(triggerEl => {
+                    try {
+                        const tabTrigger = new bootstrap.Tab(triggerEl);
+                        triggerEl.addEventListener('click', event => {
+                            event.preventDefault();
+                            tabTrigger.show();
+                            
+                            // Inicializar componentes específicos de cada pestaña
+                            const targetTab = triggerEl.getAttribute('href');
+                            if (!targetTab) return;
+                            
+                            try {
+                                if (targetTab === '#calificaciones' && !window.calificacionesInicializadas) {
+                                    inicializarCalificaciones();
+                                    window.calificacionesInicializadas = true;
+                                } else if (targetTab === '#dashboard' && typeof inicializarGraficoRendimiento === 'function') {
+                                    inicializarGraficoRendimiento();
+                                } else if (targetTab === '#horario' && typeof FullCalendar !== 'undefined') {
+                                    inicializarCalendario();
+                                }
+                            } catch (tabError) {
+                                console.error(`Error al cargar la pestaña ${targetTab}:`, tabError);
+                                mostrarNotificacion(`Error al cargar la pestaña ${targetTab}`, 'danger');
+                            }
+                        });
+                        
+                        // Activar la pestaña por defecto
+                        if (triggerEl.classList.contains('active')) {
+                            triggerEl.dispatchEvent(new Event('click'));
+                        }
+                    } catch (triggerError) {
+                        console.error('Error al inicializar la pestaña:', triggerError);
+                    }
+                });
+            } catch (tabsError) {
+                console.error('Error al inicializar las pestañas:', tabsError);
+                mostrarNotificacion('Error al inicializar las pestañas', 'danger');
+            }
+        }
+        
+        // Iniciar la aplicación cuando el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // Inicializar la aplicación principal
+                inicializarAplicacion();
+                
+                // Inicializar pestañas después de un breve retraso para asegurar que el DOM esté listo
+                setTimeout(inicializarPestanas, 100);
+                
+            } catch (error) {
+                console.error('Error al inicializar la aplicación:', error);
+                mostrarNotificacion('Error al cargar la aplicación', 'danger');
+            }
         });
     </script>
 </body>

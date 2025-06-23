@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Académico</title>
+    <link href="../../css/theme.css" rel="stylesheet">
+    <style>
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--gray-100);
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        .error-message {
+            color: #e74a3b;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <form id="loginForm">
+                <h2 style="text-align: center; margin-bottom: 1.5rem;">Iniciar Sesión</h2>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem;">Usuario:</label>
+                    <input type="text" id="username" required 
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem;">Contraseña:</label>
+                    <input type="password" id="password" required
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de usuario:</label>
+                    <div class="user-type-options">
+                        <label>
+                            <input type="radio" name="user-type" value="estudiante" checked>
+                            Estudiante
+                        </label>
+                        <label>
+                            <input type="radio" name="user-type" value="profesor">
+                            Profesor
+                        </label>
+                        <label>
+                            <input type="radio" name="user-type" value="admin">
+                            Administrador
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" 
+                        style="width: 100%; padding: 0.75rem; background-color: var(--primary-500); 
+                               color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Ingresar
+                </button>
+                <div id="errorMsg" style="color: #e74a3b; margin-top: 1rem; text-align: center;"></div>
+            </form>
+        </div>
+    </div>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/login.js"></script>
+</body>
+</html>

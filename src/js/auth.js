@@ -1,93 +1,173 @@
-// Módulo de autenticación
-(function() {
-    // Claves para localStorage
-    const AUTH_TOKEN_KEY = 'auth_token';
-    const USER_DATA_KEY = 'user_data';
+// Usuarios predefinidos con sus roles y contraseñas
+const users = [
+    // Administrador
+    {
+        username: 'admin',
+        password: 'Admin123!',
+        name: 'Administrador',
+        role: 'admin',
+        email: 'admin@universidad.edu'
+    },
+    
+    // Profesores
+    {
+        username: 'jperez',
+        password: 'Profesor123!',
+        name: 'Juan Pérez',
+        role: 'profesor',
+        email: 'jperez@universidad.edu',
+        department: 'Informática'
+    },
+    {
+        username: 'pgarcia',
+        password: 'Profesor456!',
+        name: 'Pedro García',
+        role: 'profesor',
+        email: 'pgarcia@universidad.edu',
+        department: 'Matemáticas'
+    },
+    
+    // Estudiantes
+    {
+        username: 'alopez',
+        password: 'Estudiante123!',
+        name: 'Ana López',
+        role: 'estudiante',
+        email: 'alopez@universidad.edu',
+        studentId: 'A12345',
+        major: 'Ingeniería Informática',
+        avatar: 'https://ui-avatars.com/api/?name=Ana+Lopez&size=128'
+    },
+    {
+        username: 'mrodriguez',
+        password: 'Estudiante456!',
+        name: 'María Rodríguez',
+        role: 'estudiante',
+        email: 'mrodriguez@universidad.edu',
+        studentId: 'M67890',
+        major: 'Matemáticas',
+        avatar: 'https://ui-avatars.com/api/?name=Maria+Rodriguez&size=128'
+    }
+];
 
-    // Guardar datos de autenticación
-    function setAuthData(token, user) {
-        localStorage.setItem(AUTH_TOKEN_KEY, token);
-        localStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
+/**
+ * Inicia sesión con un nombre de usuario y contraseña
+ * @param {string} username - Nombre de usuario
+ * @param {string} password - Contraseña del usuario
+ * @param {string} [requiredRole=null] - Rol requerido para el login
+ * @returns {Object} Objeto con éxito y datos del usuario o mensaje de error
+ */
+function login(username, password, requiredRole = null) {
+    // Validar tipo de rol
+    if (requiredRole && typeof requiredRole !== 'string') {
+        console.error('Tipo de rol inválido:', requiredRole);
+        requiredRole = null;
+    }
+    
+    console.log(`Intento de login para usuario: ${username}, rol requerido: ${requiredRole || 'cualquiera'}`);
+    
+    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    
+    if (!user) {
+        console.log('Usuario no encontrado');
+        return { success: false, message: 'Usuario no encontrado' };
     }
 
-    // Obtener datos del usuario
-    function getUserData() {
-        try {
-            return JSON.parse(localStorage.getItem(USER_DATA_KEY)) || null;
-        } catch (e) {
-            console.error('Error al obtener datos del usuario:', e);
-            return null;
-        }
+    if (user.password !== password) {
+        console.log('Contraseña incorrecta');
+        return { success: false, message: 'Contraseña incorrecta' };
     }
 
-
-    // Verificar si el usuario está autenticado
-    function isAuthenticated() {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const user = getUserData();
-        return !!(token && user && user.id);
+    if (requiredRole && user.role !== requiredRole) {
+        console.log(`Acceso denegado. Rol requerido: ${requiredRole}, Rol actual: ${user.role}`);
+        return { success: false, message: 'No tienes permisos para este panel' };
     }
 
-    // Verificar rol del usuario
-    function hasRole(requiredRole) {
-        if (!requiredRole) return true; // Si no se requiere un rol específico
-        const user = getUserData();
-        return user && user.role === requiredRole.toLowerCase();
-    }
-
-    // Verificar autenticación y redirigir si es necesario
-    function checkAuth(requiredRole) {
-        if (!isAuthenticated()) {
-            // Si no está autenticado, redirigir al login
-            window.location.href = '/login';
-            return false;
-        }
-
-        // Si se requiere un rol específico y el usuario no lo tiene
-        if (requiredRole && !hasRole(requiredRole)) {
-            const user = getUserData();
-            // Redirigir según el rol del usuario
-            switch(user.role) {
-                case 'admin':
-                    window.location.href = '/panel-admin';
-                    break;
-                case 'profesor':
-                    window.location.href = '/panel-profesor';
-                    break;
-                case 'alumno':
-                    window.location.href = '/panel-estudiante';
-                    break;
-                default:
-                    window.location.href = '/';
-            }
-            return false;
-        }
-
-        return true;
-    }
-
-    // Cerrar sesión
-    function logout() {
-        // Opcional: Llamar al endpoint de logout del servidor
-        fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
-        }).finally(() => {
-            // Limpiar localStorage independientemente de la respuesta del servidor
-            localStorage.removeItem(AUTH_TOKEN_KEY);
-            localStorage.removeItem(USER_DATA_KEY);
-            window.location.href = '/login';
-        });
-    }
-
-    // Exponer las funciones necesarias
-    window.auth = { 
-        setAuthData, 
-        getUserData, 
-        isAuthenticated,
-        hasRole,
-        checkAuth,
-        logout,
-        AUTH_TOKEN_KEY
+    const userData = {
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        lastLogin: new Date().toISOString()
     };
-})();
+    
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    return { success: true, user: userData };
+}
+
+/**
+ * Cierra la sesión del usuario actual
+ */
+function logout() {
+    localStorage.removeItem('currentUser');
+    window.location.href = '/login';
+}
+
+/**
+ * Verifica si hay un usuario autenticado
+ * @returns {boolean} true si hay un usuario autenticado, false en caso contrario
+ */
+function isAuthenticated() {
+    return !!localStorage.getItem('currentUser');
+}
+
+/**
+ * Obtiene los datos del usuario actual
+ * @returns {Object|null} Datos del usuario o null si no hay sesión
+ */
+function getCurrentUser() {
+    const user = localStorage.getItem('currentUser');
+    return user ? JSON.parse(user) : null;
+}
+
+/**
+ * Verifica si el usuario tiene un rol específico
+ * @param {string} role - Rol a verificar
+ * @returns {boolean} true si el usuario tiene el rol, false en caso contrario
+ */
+function hasRole(role) {
+    const user = getCurrentUser();
+    return user && user.role.toLowerCase() === role.toLowerCase();
+}
+
+/**
+ * Redirige al panel correspondiente según el rol del usuario
+ */
+function redirectToDashboard() {
+    const user = getCurrentUser();
+    if (!user) {
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Redirigir según el rol
+    const role = user.role.toLowerCase();
+    if (role === 'admin') {
+        window.location.href = '/panel-admin';
+    } else if (role === 'profesor') {
+        window.location.href = '/panel-profesor';
+    } else if (role === 'estudiante') {
+        window.location.href = '/panel-estudiante';
+    } else {
+        window.location.href = '/login';
+    }
+}
+
+// Hacer funciones accesibles globalmente
+const auth = {
+    login,
+    logout,
+    isAuthenticated,
+    getCurrentUser,
+    hasRole,
+    redirectToDashboard
+};
+
+// Exportar para CommonJS (Node.js)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = auth;
+}
+// Exportar para navegadores
+if (typeof window !== 'undefined') {
+    window.auth = auth;
+}

@@ -101,10 +101,10 @@
         </div>
         
         <div class="d-grid gap-3">
-          <a href="/login" class="btn btn-primary btn-lg">
+          <a href="http://localhost:4000/login" class="btn btn-primary btn-lg">
             <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
           </a>
-          <a href="/registro" class="btn btn-outline-secondary btn-lg">
+          <a href="http://localhost:4000/registro" class="btn btn-outline-secondary btn-lg">
             <i class="fas fa-user-plus me-2"></i>Registrarse
           </a>
         </div>
@@ -127,11 +127,11 @@
         const userData = JSON.parse(user);
         // Redirigir según el rol del usuario
         if (userData.role === 'admin') {
-          window.location.href = '/panel-admin';
+          window.location.href = 'http://localhost:4000/panel-admin';
         } else if (userData.role === 'profesor') {
-          window.location.href = '/panel-profesor';
+          window.location.href = 'http://localhost:4000/panel-profesor';
         } else {
-          window.location.href = '/panel-estudiante';
+          window.location.href = 'http://localhost:4000/panel-estudiante';
         }
       }
     });

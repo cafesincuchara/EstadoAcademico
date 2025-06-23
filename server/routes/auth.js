@@ -2,29 +2,159 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { pool } = require('../config/database');
+const { pool, query } = require('../config/database');
 const { body, validationResult } = require('express-validator');
+const rateLimit = require('express-rate-limit');
+
+// Configuración de límite de tasa para prevenir ataques de fuerza bruta
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // Límite de 10 intentos por ventana
+  message: { 
+    success: false, 
+    error: 'Demasiados intentos, por favor intente de nuevo más tarde' 
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Middleware para validar campos
-const validateFields = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ success: false, errors: errors.array() });
+const validate = validations => {
+  return async (req, res, next) => {
+    await Promise.all(validations.map(validation => validation.run(req)));
+
+    const errors = validationResult(req);
+    if (errors.isEmpty()) {
+      return next();
+    }
+
+    const errorMessages = errors.array().map(err => ({
+      field: err.param,
+      message: err.msg
+    }));
+
+    return res.status(400).json({
+      success: false,
+      errors: errorMessages
+    });
+  };
+};
+
+// Función para generar token JWT
+const generateToken = (user) => {
+  return jwt.sign(
+    { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role 
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+  );
+};
+
+// Middleware para verificar autenticación
+const authenticate = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'No se proporcionó token de autenticación'
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Verificar si el usuario existe
+    const [user] = await query(
+      'SELECT id, nombre, email, username, role FROM usuarios WHERE id = ?',
+      [decoded.id]
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Usuario no encontrado'
+      });
+    }
+
+    // Agregar información del usuario a la solicitud
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Error de autenticación:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Token inválido'
+      });
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Token expirado, por favor inicie sesión nuevamente'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Error en la autenticación'
+    });
   }
-  next();
+};
+
+// Middleware para verificar roles
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'No tiene permiso para realizar esta acción'
+      });
+    }
+    next();
+  };
 };
 
 // Ruta de registro
 router.post('/register', [
-  body('nombre').notEmpty().withMessage('El nombre es requerido'),
-  body('email').isEmail().withMessage('Ingrese un correo electrónico válido'),
-  body('username').notEmpty().withMessage('El nombre de usuario es requerido'),
-  body('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
-  body('role').isIn(['alumno', 'profesor', 'admin']).withMessage('Rol no válido'),
-  validateFields
-], async (req, res) => {
+  body('nombre')
+    .trim()
+    .notEmpty().withMessage('El nombre es requerido')
+    .isLength({ max: 100 }).withMessage('El nombre no puede tener más de 100 caracteres'),
+    
+  body('email')
+    .trim()
+    .notEmpty().withMessage('El correo electrónico es requerido')
+    .isEmail().withMessage('Ingrese un correo electrónico válido')
+    .isLength({ max: 100 }).withMessage('El correo electrónico no puede tener más de 100 caracteres')
+    .normalizeEmail(),
+    
+  body('username')
+    .trim()
+    .notEmpty().withMessage('El nombre de usuario es requerido')
+    .isLength({ min: 3, max: 50 }).withMessage('El nombre de usuario debe tener entre 3 y 50 caracteres')
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('El nombre de usuario solo puede contener letras, números y guiones bajos'),
+    
+  body('password')
+    .isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres')
+    .matches(/[0-9]/).withMessage('La contraseña debe contener al menos un número')
+    .matches(/[a-z]/).withMessage('La contraseña debe contener al menos una letra minúscula')
+    .matches(/[A-Z]/).withMessage('La contraseña debe contener al menos una letra mayúscula'),
+    
+  body('role')
+    .isIn(['alumno', 'profesor', 'admin']).withMessage('Rol no válido')
+], validate, authLimiter, async (req, res) => {
   try {
-    const { nombre, email, username, password, role } = req.body;
+    let { nombre, email, username, password, role } = req.body;
+    
+    // Normalizar el rol a minúsculas
+    role = role.toLowerCase();
 
     // Verificar si el usuario ya existe
     const [existingUsers] = await pool.query(
@@ -79,10 +209,14 @@ router.post('/register', [
 
 // Ruta de login
 router.post('/login', [
-  body('email').isEmail().withMessage('Ingrese un correo electrónico válido'),
-  body('password').notEmpty().withMessage('La contraseña es requerida'),
-  validateFields
-], async (req, res) => {
+  body('email')
+    .trim()
+    .notEmpty().withMessage('El correo electrónico es requerido')
+    .isEmail().withMessage('Ingrese un correo electrónico válido')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty().withMessage('La contraseña es requerida')
+], validate, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -168,4 +302,13 @@ router.get('/verify', (req, res) => {
   });
 });
 
-module.exports = router;
+// Exportar el router y los middlewares
+module.exports = {
+  router,
+  authenticate,
+  authorize
+};
+
+// Asignar los middlewares al router para acceso directo
+router.authenticate = authenticate;
+router.authorize = authorize;

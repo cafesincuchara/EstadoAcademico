@@ -1,0 +1,67 @@
+{
+  "name": "sistema-gestion-academica",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión Académica para instituciones educativas",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "test": "jest --watchAll --verbose",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write \"**/*.+(js|json|css|html|md)\"",
+    "prepare": "husky install",
+    "migrate:up": "node server/config/migrations.js up",
+    "migrate:down": "node server/config/migrations.js down",
+    "seed": "node server/config/seeders.js"
+  },
+  "keywords": [
+    "educación",
+    "gestión académica",
+    "nodejs",
+    "express",
+    "mysql"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.21.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
+    "hpp": "^0.2.3",
+    "http-status": "^1.5.3",
+    "jsonwebtoken": "^9.0.0",
+    "mysql2": "^3.6.0",
+    "winston": "^3.8.2",
+    "xss-clean": "^0.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.33.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "jest": "^29.4.1",
+    "lint-staged": "^13.1.2",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.8.4",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

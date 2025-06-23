@@ -14,12 +14,18 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <link rel="stylesheet" href="/css/theme.css">
     <style>
         :root {
             --primary-color: #1cc88a;
             --secondary-color: #f8f9fc;
             --accent-color: #17a673;
             --text-color: #5a5c69;
+            --profesor-500: #3498db;
+            --profesor-600: #2e6da4;
+            --card-bg: #fff;
+            --card-border: #ddd;
+            --text-heading: #333;
         }
         
         body {
@@ -30,7 +36,7 @@
         
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(180deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            background: linear-gradient(180deg, var(--profesor-500) 0%, var(--profesor-600) 100%);
             color: white;
         }
         
@@ -42,17 +48,17 @@
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: var(--profesor-500);
+            border-color: var(--profesor-500);
         }
         
         .btn-primary:hover {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
+            background-color: var(--profesor-600);
+            border-color: var(--profesor-600);
         }
         
         .nav-pills .nav-link.active {
-            background-color: var(--primary-color);
+            background-color: var(--profesor-500);
         }
         
         .nav-link {
@@ -69,6 +75,11 @@
             width: 1.5rem;
             text-align: center;
             margin-right: 0.5rem;
+        }
+        
+        .card-header {
+            background-color: var(--profesor-500);
+            color: white;
         }
     </style>
 </head>
@@ -151,38 +162,38 @@
                             <h4 class="mb-4">Resumen del Profesor</h4>
                             <div class="row">
                                 <div class="col-md-3 mb-4">
-                                    <div class="card bg-primary text-white">
+                                    <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                         <div class="card-body">
-                                            <h6 class="card-title">Cursos Activos</h6>
-                                            <h2 class="mb-0" id="cursosActivos">0</h2>
-                                            <small id="cursosVariacion">Cargando...</small>
+                                            <h6 class="card-title" style="color: var(--text-heading);">Cursos Activos</h6>
+                                            <h2 class="mb-0" id="cursosActivos" style="color: var(--text-color);">0</h2>
+                                            <small id="cursosVariacion" style="color: var(--text-color);">Cargando...</small>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-3 mb-4">
-                                    <div class="card bg-success text-white">
+                                    <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                         <div class="card-body">
-                                            <h6 class="card-title">Estudiantes</h6>
-                                            <h2 class="mb-0" id="totalEstudiantes">0</h2>
-                                            <small>Promedio por curso: <span id="promedioEstudiantes">0</span></small>
+                                            <h6 class="card-title" style="color: var(--text-heading);">Estudiantes</h6>
+                                            <h2 class="mb-0" id="totalEstudiantes" style="color: var(--text-color);">0</h2>
+                                            <small style="color: var(--text-color);">Promedio por curso: <span id="promedioEstudiantes" style="color: var(--text-color);">0</span></small>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-3 mb-4">
-                                    <div class="card bg-info text-white">
+                                    <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                         <div class="card-body">
-                                            <h6 class="card-title">Tareas Pendientes</h6>
-                                            <h2 class="mb-0" id="tareasPendientes">0</h2>
-                                            <small>Por revisar: <span id="tareasPorRevisar">0</span></small>
+                                            <h6 class="card-title" style="color: var(--text-heading);">Tareas Pendientes</h6>
+                                            <h2 class="mb-0" id="tareasPendientes" style="color: var(--text-color);">0</h2>
+                                            <small style="color: var(--text-color);">Por revisar: <span id="tareasPorRevisar" style="color: var(--text-color);">0</span></small>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-3 mb-4">
-                                    <div class="card bg-warning text-dark">
+                                    <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                         <div class="card-body">
-                                            <h6 class="card-title">Próximas Clases</h6>
-                                            <h2 class="mb-0" id="proximasClases">0</h2>
-                                            <small>Hoy: <span id="clasesHoy">0</span></small>
+                                            <h6 class="card-title" style="color: var(--text-heading);">Próximas Clases</h6>
+                                            <h2 class="mb-0" id="proximasClases" style="color: var(--text-color);">0</h2>
+                                            <small style="color: var(--text-color);">Hoy: <span id="clasesHoy" style="color: var(--text-color);">0</span></small>
                                         </div>
                                     </div>
                                 </div>
@@ -190,9 +201,9 @@
 
                             <div class="row">
                                 <div class="col-md-8">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0">Calendario de Clases</h6>
+                                    <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
+                                        <div class="card-header" style="background: var(--profesor-600); color: white;">
+                                            <h6 class="mb-0" style="color: var(--text-heading);">Calendario de Clases</h6>
                                         </div>
                                         <div class="card-body">
                                             <div id="calendario"></div>
@@ -200,13 +211,13 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0">Tareas Recientes</h6>
+                                    <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
+                                        <div class="card-header" style="background: var(--profesor-600); color: white;">
+                                            <h6 class="mb-0" style="color: var(--text-heading);">Tareas Recientes</h6>
                                         </div>
                                         <div class="card-body">
                                             <div id="tareasRecientes">
-                                                <p class="text-muted text-center my-4">Cargando tareas recientes...</p>
+                                                <p class="text-muted text-center my-4" style="color: var(--text-color);">Cargando tareas recientes...</p>
                                             </div>
                                         </div>
                                     </div>
@@ -218,31 +229,31 @@
                         <div class="tab-pane fade" id="cursos">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4>Mis Cursos</h4>
-                                <button class="btn btn-primary">
+                                <button class="btn btn-primary" data-action="nuevo-curso">
                                     <i class="fas fa-plus me-1"></i> Nuevo Curso
                                 </button>
                             </div>
-                            <div class="card">
+                            <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                 <div class="card-body">
-                                    <p>Lista de cursos se cargará aquí...</p>
+                                    <p style="color: var(--text-color);">Lista de cursos se cargará aquí...</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="tab-pane fade" id="calificaciones">
                             <h4 class="mb-4">Gestión de Calificaciones</h4>
-                            <div class="card">
+                            <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                 <div class="card-body">
-                                    <p>Panel de calificaciones se cargará aquí...</p>
+                                    <p style="color: var(--text-color);">Panel de calificaciones se cargará aquí...</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="tab-pane fade" id="asistencia">
                             <h4 class="mb-4">Control de Asistencia</h4>
-                            <div class="card">
+                            <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                 <div class="card-body">
-                                    <p>Panel de asistencia se cargará aquí...</p>
+                                    <p style="color: var(--text-color);">Panel de asistencia se cargará aquí...</p>
                                 </div>
                             </div>
                         </div>
@@ -250,13 +261,13 @@
                         <div class="tab-pane fade" id="tareas">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4>Gestión de Tareas</h4>
-                                <button class="btn btn-primary">
+                                <button class="btn btn-primary" data-action="nueva-tarea">
                                     <i class="fas fa-plus me-1"></i> Nueva Tarea
                                 </button>
                             </div>
-                            <div class="card">
+                            <div class="card" style="background: var(--card-bg); border-color: var(--card-border);">
                                 <div class="card-body">
-                                    <p>Lista de tareas se cargará aquí...</p>
+                                    <p style="color: var(--text-color);">Lista de tareas se cargará aquí...</p>
                                 </div>
                             </div>
                         </div>
@@ -278,43 +289,98 @@
     <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js'></script>
-    
-    <!-- Módulo de autenticación -->
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Auth Module -->
     <script src="/js/auth.js"></script>
     
     <script>
+        // Función para cerrar sesión
+        function cerrarSesion() {
+            if (window.auth && typeof window.auth.logout === 'function') {
+                window.auth.logout();
+            } else {
+                // Redirigir al login si no se puede cerrar sesión correctamente
+                window.location.href = '/login';
+            }
+        }
+
+
         // Verificar autenticación al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar autenticación y rol
-            if (window.auth) {
-                if (!window.auth.checkAuth('profesor')) {
-                    return; // La función checkAuth ya maneja la redirección
+            console.log('Verificando autenticación del profesor...');
+            
+            try {
+                // Verificar si el módulo de autenticación está disponible
+                if (!window.auth) {
+                    console.error('El módulo de autenticación no está disponible');
+                    window.location.href = '/login';
+                    return;
                 }
-                
-                // Configurar cierre de sesión
-                const logoutBtns = document.querySelectorAll('#btnCerrarSesion, #btnCerrarSesionTop');
-                logoutBtns.forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        window.auth.logout();
-                    });
-                });
-                
-                // Cargar datos del profesor
-                const userData = window.auth.getUserData();
+
+                // Verificar si el usuario está autenticado y es profesor
+                if (!window.auth.isAuthenticated() || !window.auth.hasRole('profesor')) {
+                    console.log('Usuario no autenticado o sin permisos de profesor, redirigiendo...');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Obtener datos del usuario
+                const userData = window.auth.getCurrentUser();
                 if (userData) {
-                    // Actualizar información del perfil
-                    document.getElementById('profesorNombre').textContent = userData.name || 'Profesor';
-                    document.getElementById('nombreUsuario').textContent = userData.name || 'Usuario';
+                    // Actualizar la interfaz con los datos del usuario
+                    const nombreUsuario = document.getElementById('nombreUsuario');
+                    const profesorNombre = document.getElementById('profesorNombre');
+                    const avatarUsuario = document.getElementById('profesorAvatar');
                     
-                    // Actualizar avatar con iniciales
-                    const avatar = document.getElementById('profesorAvatar');
-                    if (avatar && userData.name) {
-                        const name = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
-                        avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1cc88a&color=fff`;
+                    // Actualizar elementos de nombre de usuario
+                    if (nombreUsuario) nombreUsuario.textContent = userData.name || 'Profesor';
+                    if (profesorNombre) profesorNombre.textContent = userData.name || 'Profesor';
+                    
+                    // Actualizar avatar
+                    if (avatarUsuario) {
+                        const name = userData.name ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'P';
+                        avatarUsuario.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1cc88a&color=fff`;
+                        avatarUsuario.alt = userData.name || 'Profesor';
                     }
                 }
                 
+                // Configurar eventos de cierre de sesión
+                const btnCerrarSesion = document.getElementById('btnCerrarSesionTop');
+                if (btnCerrarSesion) {
+                    btnCerrarSesion.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        cerrarSesion();
+                    });
+                }
+
+                // Configurar eventos de los botones
+                document.querySelectorAll('button[data-action="nuevo-curso"]').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        alert('Función de nuevo curso en desarrollo');
+                        // Aquí iría la lógica para crear un nuevo curso
+                    });
+                });
+
+                document.querySelectorAll('button[data-action="nueva-tarea"]').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        alert('Función de nueva tarea en desarrollo');
+                        // Aquí iría la lógica para crear una nueva tarea
+                    });
+                });
+
+                // Configurar eventos de las pestañas
+                const tabLinks = document.querySelectorAll('[data-bs-toggle="tab"]');
+                tabLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        const targetTab = this.getAttribute('href');
+                        console.log('Cambiando a pestaña:', targetTab);
+                        // Aquí puedes agregar lógica adicional al cambiar de pestaña
+                    });
+                });
+
                 // Inicializar componentes
                 try {
                     // Inicializar DataTables si hay tablas
@@ -325,14 +391,14 @@
                             }
                         });
                     }
-                    
+
                     // Inicializar Select2
                     if ($.fn.select2) {
                         $('.select2').select2({
                             theme: 'bootstrap-5'
                         });
                     }
-                    
+
                     // Inicializar FullCalendar
                     if (typeof FullCalendar !== 'undefined') {
                         const calendarEl = document.getElementById('calendario');
@@ -359,26 +425,32 @@
                             calendar.render();
                         }
                     }
-                    
+
+                    // Inicializar el menú desplegable de Bootstrap
+                    const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+                    dropdownElementList.forEach(function(dropdownToggleEl) {
+                        return new bootstrap.Dropdown(dropdownToggleEl);
+                    });
+
+                    // Toggle Sidebar en móviles
+                    const sidebarToggle = document.getElementById('sidebarToggle');
+                    const sidebar = document.querySelector('.sidebar');
+
+                    if (sidebarToggle && sidebar) {
+                        sidebarToggle.addEventListener('click', function() {
+                            sidebar.classList.toggle('d-none');
+                        });
+                    }
+
                     // Cargar datos del dashboard
                     cargarDatosDashboard();
-                    
+
                 } catch (error) {
                     console.error('Error al inicializar componentes:', error);
                 }
-                
-                // Toggle Sidebar en móviles
-                const sidebarToggle = document.getElementById('sidebarToggle');
-                const sidebar = document.querySelector('.sidebar');
-                
-                if (sidebarToggle && sidebar) {
-                    sidebarToggle.addEventListener('click', function() {
-                        sidebar.classList.toggle('d-none');
-                    });
-                }
-                
-            } else {
-                console.error('Error: No se pudo cargar el módulo de autenticación');
+
+            } catch (error) {
+                console.error('Error al cargar los datos del usuario:', error);
                 window.location.href = '/login';
             }
         });
@@ -386,8 +458,7 @@
         // Función para cargar los datos del dashboard
         async function cargarDatosDashboard() {
             try {
-                // Aquí irían las llamadas a la API para obtener los datos
-                // Por ahora usamos datos de ejemplo
+                // Datos de ejemplo
                 document.getElementById('cursosActivos').textContent = '4';
                 document.getElementById('cursosVariacion').textContent = '+1 desde el mes pasado';
                 document.getElementById('totalEstudiantes').textContent = '120';

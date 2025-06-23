@@ -17,16 +17,56 @@ const AppState = {
 // Inicialización de la aplicación
 class StudentPanelApp {
     constructor() {
+        // Verificar autenticación antes de inicializar
+        if (!this.checkAuth()) {
+            return;
+        }
+        
         this.initEventListeners();
-        this.checkAuthStatus();
         this.setupInactivityTimer();
+        this.loadInitialData();
+    }
+
+    // Verificar autenticación
+    checkAuth() {
+        try {
+            // Verificar si el módulo de autenticación está disponible
+            if (!window.auth) {
+                console.error('El módulo de autenticación no está disponible');
+                this.redirectToLogin();
+                return false;
+            }
+
+            // Verificar si el usuario está autenticado y es estudiante
+            if (!window.auth.isAuthenticated() || !window.auth.hasRole('estudiante')) {
+                console.log('Usuario no autenticado o sin permisos de estudiante, redirigiendo...');
+                this.redirectToLogin();
+                return false;
+            }
+
+            // Obtener y guardar datos del usuario
+            const userData = window.auth.getCurrentUser();
+            if (!userData) {
+                console.error('No se pudieron obtener los datos del usuario');
+                this.redirectToLogin();
+                return false;
+            }
+
+            AppState.user = userData;
+            return true;
+            
+        } catch (error) {
+            console.error('Error al verificar autenticación:', error);
+            this.redirectToLogin();
+            return false;
+        }
     }
 
     // Inicializar event listeners
     initEventListeners() {
         // Cerrar sesión
         document.addEventListener('click', (e) => {
-            if (e.target.closest('[data-action="logout"]')) {
+            if (e.target.closest('[data-action="logout"], [id^="btnCerrarSesion"]')) {
                 e.preventDefault();
                 this.logout();
             }
@@ -36,30 +76,11 @@ class StudentPanelApp {
         ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
             document.addEventListener(event, this.updateActivity.bind(this), false);
         });
-    }
-
-
-    // Verificar estado de autenticación
-    async checkAuthStatus() {
-        try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                this.redirectToLogin();
-                return;
-            }
-
-            const user = await this.fetchUserData(token);
-            if (user) {
-                AppState.user = user;
-                AppState.authToken = token;
-                this.updateUI();
-                this.loadInitialData();
-            } else {
-                this.redirectToLogin();
-            }
-        } catch (error) {
-            console.error('Error al verificar autenticación:', error);
-            this.redirectToLogin();
+        
+        // Manejar clic en el botón de menú móvil
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', this.toggleSidebar.bind(this));
         }
     }
 
@@ -67,8 +88,16 @@ class StudentPanelApp {
     // Cargar datos iniciales
     async loadInitialData() {
         try {
+            // Verificar autenticación nuevamente por si acaso
+            if (!this.checkAuth()) {
+                return;
+            }
+            
             // Inicializar componentes
             this.initializeComponents();
+            
+            // Actualizar la interfaz con los datos del usuario
+            this.updateUI();
             
             // Cargar datos del dashboard
             await this.loadDashboardData();
@@ -78,12 +107,18 @@ class StudentPanelApp {
             
             // Mostrar notificación de bienvenida
             this.showNotification(
-                `¡Bienvenido/a de vuelta, ${AppState.user.nombre || 'Estudiante'}!`,
+                `¡Bienvenido/a de vuelta, ${AppState.user.name || 'Estudiante'}!`,
                 'success'
             );
+            
+            console.log('Aplicación del estudiante inicializada correctamente');
+            
         } catch (error) {
             console.error('Error al cargar datos iniciales:', error);
-            this.showNotification(CONFIG.DEFAULT_ERROR_MSG, 'error');
+            this.showNotification(
+                error.message || CONFIG.DEFAULT_ERROR_MSG, 
+                'error'
+            );
         }
     }
 
@@ -180,24 +215,30 @@ class StudentPanelApp {
     }
 
     // Cerrar sesión
-    async logout() {
-        try {
-            // Limpiar estado
+    logout() {
+        console.log('Cerrando sesión...');
+        
+        // Usar el módulo de autenticación si está disponible
+        if (window.auth && typeof window.auth.logout === 'function') {
+            window.auth.logout();
+        } else {
+            // Limpieza manual si el módulo no está disponible
+            AppState.user = null;
+            AppState.authToken = null;
             localStorage.removeItem('authToken');
-            sessionStorage.clear();
-            
-            // Redirigir al login
-            this.redirectToLogin();
-            
-        } catch (error) {
-            console.error('Error al cerrar sesión:', error);
             this.redirectToLogin();
         }
     }
 
     // Redirigir al login
     redirectToLogin() {
-        window.location.href = '/login';
+        // Usar el módulo de autenticación si está disponible
+        if (window.auth && typeof window.auth.redirectToLogin === 'function') {
+            window.auth.redirectToLogin();
+        } else {
+            // Redirección manual si el módulo no está disponible
+            window.location.href = '/login';
+        }
     }
 
     // Configurar temporizador de inactividad
@@ -353,6 +394,39 @@ class StudentPanelApp {
 
 // Inicializar la aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new StudentPanelApp();
-    window.app = app; // Hacer accesible desde la consola para depuración
+    try {
+        // Inicializar la aplicación
+        const app = new StudentPanelApp();
+        
+        // Hacer accesible desde la consola para depuración
+        window.app = app;
+        
+        // Registrar el evento de cierre de pestaña/ventana
+        window.addEventListener('beforeunload', () => {
+            // Limpiar recursos si es necesario
+            if (app.cleanup) {
+                app.cleanup();
+            }
+        });
+        
+        console.log('Aplicación del panel de estudiante inicializada');
+        
+    } catch (error) {
+        console.error('Error al inicializar la aplicación:', error);
+        
+        // Mostrar mensaje de error al usuario
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'alert alert-danger m-3';
+        errorMessage.textContent = 'Error al cargar la aplicación. Por favor, recarga la página.';
+        
+        const container = document.querySelector('.container-fluid') || document.body;
+        container.prepend(errorMessage);
+        
+        // Redirigir al login si hay un error de autenticación
+        if (error.message && error.message.includes('autenticación')) {
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 3000);
+        }
+    }
 });
